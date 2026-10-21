@@ -15,48 +15,111 @@ class GameDevelopmentPage extends StatelessWidget {
     );
   }
 
+  Widget _buildHeader(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(
+        horizontal: 60,
+        vertical: 22,
+      ),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          bottom: BorderSide(color: Color(0xFFE8E8E8)),
+        ),
+      ),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: const Text(
+              'NEXORA',
+              style: TextStyle(
+                fontSize: 23,
+                fontWeight: FontWeight.w800,
+                color: purple,
+                letterSpacing: 1,
+              ),
+            ),
+          ),
+          const Spacer(),
+          ElevatedButton(
+            onPressed: () => _showContacts(context),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: purple,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 22,
+                vertical: 15,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(5),
+              ),
+            ),
+            child: const Text(
+              'Связаться',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
 
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
+      body: Column(
+        children: [
+          _buildHeader(context),
 
-            // ================= HERO =================
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
 
-            _GameHero(
-              onContact: () {
-                _showContacts(context);
-              },
+                  // ================= HERO =================
+
+                  _GameHero(
+                    onContact: () {
+                      _showContacts(context);
+                    },
+                  ),
+
+                  // ================= TYPES =================
+
+                  _GameTypes(),
+
+                  // ================= TECHNOLOGIES =================
+
+                  _GameTechnologies(),
+
+                  // ================= PROJECTS =================
+
+                  _GameProjects(),
+
+                  // ================= TEAM =================
+
+                  _GameTeam(),
+
+                  // ================= CONTACT =================
+
+                  _GameContact(
+                    onContact: () {
+                      _showContacts(context);
+                    },
+                  ),
+                ],
+              ),
             ),
-
-            // ================= TYPES =================
-
-            _GameTypes(),
-
-            // ================= TECHNOLOGIES =================
-
-            _GameTechnologies(),
-
-            // ================= PROJECTS =================
-
-            _GameProjects(),
-
-            // ================= TEAM =================
-
-            _GameTeam(),
-
-            // ================= CONTACT =================
-
-            _GameContact(
-              onContact: () {
-                _showContacts(context);
-              },
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

@@ -51,6 +51,15 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  void _showOrderRequestDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return const OrderRequestWidget();
+      },
+    );
+  }
+
   void _openMobilePage() {
     Navigator.push(
       context,
@@ -290,7 +299,7 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(height: 40),
 
               ElevatedButton(
-                onPressed: _showContactDialog,
+                onPressed: _showOrderRequestDialog,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: purple,
                   foregroundColor: Colors.white,
@@ -300,7 +309,7 @@ class _HomePageState extends State<HomePage> {
                     borderRadius: BorderRadius.circular(5),
                   ),
                 ),
-                child: const Text('Связаться', style: TextStyle(fontSize: 16)),
+                child: const Text('Заявка на услугу', style: TextStyle(fontSize: 16)),
               ),
             ],
           ),
@@ -339,7 +348,7 @@ class _HomePageState extends State<HomePage> {
         const SizedBox(height: 30),
 
         ElevatedButton(
-          onPressed: _showContactDialog,
+          onPressed: _showOrderRequestDialog,
           style: ElevatedButton.styleFrom(
             backgroundColor: purple,
             foregroundColor: Colors.white,
@@ -349,7 +358,7 @@ class _HomePageState extends State<HomePage> {
               borderRadius: BorderRadius.circular(5),
             ),
           ),
-          child: const Text('Связаться', style: TextStyle(fontSize: 16)),
+          child: const Text('Заявка на услугу', style: TextStyle(fontSize: 16)),
         ),
 
         const SizedBox(height: 45),

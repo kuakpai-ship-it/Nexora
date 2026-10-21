@@ -20,17 +20,23 @@ class AboutPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            _buildHeader(context),
-            _buildHero(context),
-            _buildAboutText(context),
-            _buildTeam(context),
-            _buildContactSection(context),
-            _buildFooter(),
-          ],
-        ),
+      body: Column(
+        children: [
+          _buildHeader(context),
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  _buildHero(context),
+                  _buildAboutText(context),
+                  _buildTeam(context),
+                  _buildContactSection(context),
+                  _buildFooter(),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
