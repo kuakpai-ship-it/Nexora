@@ -4,16 +4,6 @@ import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
 
-/// Default [FirebaseOptions] for use with your Firebase apps.
-///
-/// Example:
-/// ```dart
-/// import 'firebase_options.dart';
-/// // ...
-/// await Firebase.initializeApp(
-///   options: DefaultFirebaseOptions.currentPlatform,
-/// );
-/// ```
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
@@ -42,45 +32,45 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions web = FirebaseOptions(
     apiKey: 'AIzaSyDo5SbuKE6-Y_VAZXqQMdqUPUIVf8-WY64',
-    appId: '1:38022833169:web:1074941173aa7b1522fdb0',
-    messagingSenderId: '38022833169',
-    projectId: 'nexora-3261b',
-    authDomain: 'nexora-3261b.firebaseapp.com',
-    storageBucket: 'nexora-3261b.firebasestorage.app',
-    measurementId: 'G-9MN7ZG7DZS',
+    appId: '1:731248589799:web:bcaa463be9a874c66a9b42',
+    messagingSenderId: '731248589799',
+    projectId: 'nexora-3261b-88f1d',
+    authDomain: 'nexora-3261b-88f1d.firebaseapp.com',
+    storageBucket: 'nexora-3261b-88f1d.appspot.com',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyBROjJ4e-ckAFgR1spqvHgr6qwRnOrbZr0',
-    appId: '1:38022833169:android:147012fd7ee5c34a22fdb0',
-    messagingSenderId: '38022833169',
-    projectId: 'nexora-3261b',
-    storageBucket: 'nexora-3261b.firebasestorage.app',
+    appId: '1:731248589799:android:bcaa463be9a874c66a9b42',
+    messagingSenderId: '731248589799',
+    projectId: 'nexora-3261b-88f1d',
+    storageBucket: 'nexora-3261b-88f1d.appspot.com',
   );
+
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyB8TutcpDIpAjC7su3tjjLu20fPiyCkR38',
-    appId: '1:38022833169:ios:f4bb4903bedc691522fdb0',
-    messagingSenderId: '38022833169',
-    projectId: 'nexora-3261b',
-    storageBucket: 'nexora-3261b.firebasestorage.app',
+    appId: '1:731248589799:ios:bcaa463be9a874c66a9b42',
+    messagingSenderId: '731248589799',
+    projectId: 'nexora-3261b-88f1d',
+    storageBucket: 'nexora-3261b-88f1d.appspot.com',
     iosBundleId: 'com.example.nexora',
   );
+
   static const FirebaseOptions macos = FirebaseOptions(
     apiKey: 'AIzaSyB8TutcpDIpAjC7su3tjjLu20fPiyCkR38',
-    appId: '1:38022833169:ios:f4bb4903bedc691522fdb0',
-    messagingSenderId: '38022833169',
-    projectId: 'nexora-3261b',
-    storageBucket: 'nexora-3261b.firebasestorage.app',
+    appId: '1:731248589799:ios:bcaa463be9a874c66a9b42',
+    messagingSenderId: '731248589799',
+    projectId: 'nexora-3261b-88f1d',
+    storageBucket: 'nexora-3261b-88f1d.appspot.com',
     iosBundleId: 'com.example.nexora',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
     apiKey: 'AIzaSyDo5SbuKE6-Y_VAZXqQMdqUPUIVf8-WY64',
-    appId: '1:38022833169:web:c5cb8b8c1c55613122fdb0',
-    messagingSenderId: '38022833169',
-    projectId: 'nexora-3261b',
-    authDomain: 'nexora-3261b.firebaseapp.com',
-    storageBucket: 'nexora-3261b.firebasestorage.app',
-    measurementId: 'G-RD8PKK8FMD',
+    appId: '1:731248589799:web:bcaa463be9a874c66a9b42',
+    messagingSenderId: '731248589799',
+    projectId: 'nexora-3261b-88f1d',
+    authDomain: 'nexora-3261b-88f1d.firebaseapp.com',
+    storageBucket: 'nexora-3261b-88f1d.appspot.com',
   );
 }

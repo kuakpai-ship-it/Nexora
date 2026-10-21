@@ -1,10 +1,33 @@
 {
   "hosting": {
+    "site": "nexora-web-731248589799",
     "public": "build/web",
     "ignore": [
       "firebase.json",
       "**/.*",
       "**/node_modules/**"
+    ],
+    "headers": [
+      {
+        "source": "**/*.mp4",
+        "headers": [
+          { "key": "Accept-Ranges", "value": "bytes" },
+          { "key": "Content-Type", "value": "video/mp4" },
+          { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+        ]
+      },
+      {
+        "source": "/flutter_bootstrap.js",
+        "headers": [
+          { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+        ]
+      },
+      {
+        "source": "/index.html",
+        "headers": [
+          { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+        ]
+      }
     ],
     "rewrites": [
       {
@@ -17,20 +40,17 @@
     "platforms": {
       "android": {
         "default": {
-          "projectId": "nexora-3261b",
-          "appId": "1:38022833169:android:147012fd7ee5c34a22fdb0",
+          "projectId": "nexora-3261b-88f1d",
+          "appId": "1:731248589799:android:bcaa463be9a874c66a9b42",
           "fileOutput": "android/app/google-services.json"
         }
       },
       "dart": {
         "lib/firebase_options.dart": {
-          "projectId": "nexora-3261b",
+          "projectId": "nexora-3261b-88f1d",
           "configurations": {
-            "android": "1:38022833169:android:147012fd7ee5c34a22fdb0",
-            "ios": "1:38022833169:ios:f4bb4903bedc691522fdb0",
-            "macos": "1:38022833169:ios:f4bb4903bedc691522fdb0",
-            "web": "1:38022833169:web:1074941173aa7b1522fdb0",
-            "windows": "1:38022833169:web:c5cb8b8c1c55613122fdb0"
+            "android": "1:731248589799:android:bcaa463be9a874c66a9b42",
+            "web": "1:731248589799:web:bcaa463be9a874c66a9b42"
           }
         }
       }

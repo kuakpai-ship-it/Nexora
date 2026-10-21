@@ -27,10 +27,15 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
 
-    videoController = VideoPlayerController.asset('assets/videos/main.mp4');
+    videoController = VideoPlayerController.networkUrl(
+      Uri.parse('https://res.cloudinary.com/yqbdknq8/video/upload/v1792509210/logo_light.webm'),
+    );
+    videoController.setLooping(true);
+    videoController.setVolume(0);
 
     videoController.initialize().then((_) {
       if (mounted) {
+        videoController.play();
         setState(() {});
       }
     });
