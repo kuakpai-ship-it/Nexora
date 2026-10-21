@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:nexora/data/consts/app_colors.dart';
 import 'package:nexora/presentation/widgets/contacts_widget.dart';
+import 'package:nexora/presentation/widgets/keyboard_scrollable.dart';
+import 'package:nexora/presentation/widgets/service_page_header.dart';
+import 'package:nexora/presentation/widgets/responsive_layout.dart';
+import 'package:nexora/presentation/widgets/scroll_reveal.dart';
 
 class MachineLearningPage extends StatelessWidget {
   const MachineLearningPage({super.key});
@@ -10,8 +13,9 @@ class MachineLearningPage extends StatelessWidget {
   void _showContactDialog(BuildContext context) {
     showDialog(
       context: context,
+      barrierColor: Colors.black54,
       builder: (context) {
-        return const ContactsWidget();
+        return const OrderRequestWidget();
       },
     );
   }
@@ -19,88 +23,23 @@ class MachineLearningPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: Colors.transparent,
       body: Column(
         children: [
-          _buildHeader(context),
+          const ServicePageHeader(),
 
           Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  _buildHero(context),
-                  _buildServices(),
-                  _buildProcess(),
-                  _buildContact(context),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context) {
-    return Container(
-      height: 75,
-      padding: const EdgeInsets.symmetric(horizontal: 35),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          bottom: BorderSide(
-            color: Color(0xFFEAEAEA),
-          ),
-        ),
-      ),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () {
-              Navigator.pop(context);
-            },
-            child: Text(
-              'Nexora',
-              style: TextStyle(
-                fontSize: 30,
-                fontWeight: FontWeight.bold,
-                color: purple,
-              ),
-            ),
-          ),
-
-          const Spacer(),
-
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            child: const Text(
-              'Назад',
-              style: TextStyle(
-                fontSize: 15,
-                color: Colors.black,
-              ),
-            ),
-          ),
-
-          const SizedBox(width: 25),
-
-          ElevatedButton(
-            onPressed: () => _showContactDialog(context),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: purple,
-              foregroundColor: Colors.white,
-              minimumSize: const Size(190, 45),
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(5),
-              ),
-            ),
-            child: const Text(
-              'Свяжитесь с нами',
-              style: TextStyle(
-                fontSize: 14,
+            child: KeyboardScrollable(
+              builder: (context, controller) => SingleChildScrollView(
+                controller: controller,
+                child: Column(
+                  children: [
+                    ScrollReveal(child: _buildHero(context)),
+                    ScrollReveal(child: _buildServices(context)),
+                    ScrollReveal(child: _buildProcess(context)),
+                    ScrollReveal(child: _buildContact(context)),
+                  ],
+                ),
               ),
             ),
           ),
@@ -112,10 +51,7 @@ class MachineLearningPage extends StatelessWidget {
   Widget _buildHero(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(
-        horizontal: 60,
-        vertical: 100,
-      ),
+      padding: responsiveSectionInsets(context, vertical: 100),
       child: LayoutBuilder(
         builder: (context, constraints) {
           if (constraints.maxWidth < 850) {
@@ -136,23 +72,13 @@ class MachineLearningPage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                '01',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: purple,
-                ),
-              ),
-
-              const SizedBox(height: 25),
-
               const Text(
                 'Машинное\nобучение',
                 style: TextStyle(
                   fontSize: 64,
                   fontWeight: FontWeight.w500,
                   height: 1.05,
+                  color: Colors.white,
                 ),
               ),
 
@@ -164,7 +90,7 @@ class MachineLearningPage extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 19,
                   height: 1.7,
-                  color: Colors.black54,
+                  color: const Color(0xFFE8E8E8),
                 ),
               ),
 
@@ -183,9 +109,7 @@ class MachineLearningPage extends StatelessWidget {
                 ),
                 child: const Text(
                   'Обсудить проект',
-                  style: TextStyle(
-                    fontSize: 16,
-                  ),
+                  style: TextStyle(fontSize: 16),
                 ),
               ),
             ],
@@ -199,17 +123,11 @@ class MachineLearningPage extends StatelessWidget {
           child: Container(
             height: 420,
             decoration: BoxDecoration(
-              color: const Color(0xFFF7F7F7),
-              border: Border.all(
-                color: const Color(0xFFE5E5E5),
-              ),
+              color: Colors.transparent,
+              border: Border.all(color: const Color(0xFFE5E5E5)),
             ),
             child: Center(
-              child: Icon(
-                Icons.auto_awesome,
-                size: 150,
-                color: purple,
-              ),
+              child: Icon(Icons.auto_awesome, size: 150, color: purple),
             ),
           ),
         ),
@@ -222,22 +140,12 @@ class MachineLearningPage extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '01',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: purple,
-          ),
-        ),
-
-        const SizedBox(height: 20),
-
-        const Text(
           'Машинное\nобучение',
           style: TextStyle(
-            fontSize: 45,
+            fontSize: responsiveHeadingSize(context, desktop: 45),
             fontWeight: FontWeight.w500,
             height: 1.05,
+            color: Colors.white,
           ),
         ),
 
@@ -246,11 +154,7 @@ class MachineLearningPage extends StatelessWidget {
         const Text(
           'Умные решения для анализа данных,\n'
           'автоматизации процессов и развития бизнеса.',
-          style: TextStyle(
-            fontSize: 17,
-            height: 1.7,
-            color: Colors.black54,
-          ),
+          style: TextStyle(fontSize: 19, height: 1.7, color: const Color(0xFFE8E8E8)),
         ),
 
         const SizedBox(height: 30),
@@ -266,12 +170,7 @@ class MachineLearningPage extends StatelessWidget {
               borderRadius: BorderRadius.circular(5),
             ),
           ),
-          child: const Text(
-            'Обсудить проект',
-            style: TextStyle(
-              fontSize: 16,
-            ),
-          ),
+          child: const Text('Обсудить проект', style: TextStyle(fontSize: 16)),
         ),
 
         const SizedBox(height: 45),
@@ -280,128 +179,136 @@ class MachineLearningPage extends StatelessWidget {
           width: double.infinity,
           height: 280,
           decoration: BoxDecoration(
-            color: const Color(0xFFF7F7F7),
-            border: Border.all(
-              color: const Color(0xFFE5E5E5),
-            ),
+            color: Colors.transparent,
+            border: Border.all(color: const Color(0xFFE5E5E5)),
           ),
           child: Center(
-            child: Icon(
-              Icons.auto_awesome,
-              size: 100,
-              color: purple,
-            ),
+            child: Icon(Icons.auto_awesome, size: 100, color: purple),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildServices() {
+  Widget _buildServices(BuildContext context) {
+    final items = [
+      {'title': 'Анализ данных', 'text': 'Находим закономерности и полезную информацию в больших объёмах данных.'},
+      {'title': 'AI-модели', 'text': 'Создаём модели машинного обучения под конкретные задачи бизнеса.'},
+      {'title': 'Прогнозирование', 'text': 'Помогаем прогнозировать продажи, спрос и другие важные показатели.'},
+    ];
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(
-        horizontal: 60,
-        vertical: 100,
-      ),
-      color: const Color(0xFFF7F7F7),
+      padding: responsiveSectionInsets(context, vertical: 100),
+      color: Colors.transparent,
       child: LayoutBuilder(
         builder: (context, constraints) {
-          if (constraints.maxWidth < 800) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _number('02'),
+          final isDesktop = constraints.maxWidth >= 800;
 
-                const SizedBox(height: 20),
+          final header = Row(
+            children: [
+              Text(
+                'Что мы делаем',
+                style: TextStyle(
+                  fontSize: responsiveHeadingSize(context, desktop: isDesktop ? 44 : 32),
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          );
 
-                const Text(
-                  'Что мы делаем',
-                  style: TextStyle(
-                    fontSize: 44,
-                    fontWeight: FontWeight.w500,
+          // Единая картинка — обрезанная со всех сторон до краёв внутренних картинок
+          final imageRow = ClipRect(
+            child: Align(
+              alignment: Alignment.center,
+              heightFactor: 0.78,
+              widthFactor: 0.96,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.asset(
+                  'assets/images/ailogo.png',
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+          );
+
+          // Подписи под картинкой — 3 колонки, ближе к картинке
+          final labelsRow = isDesktop
+              ? Padding(
+                  padding: const EdgeInsets.only(top: 10),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: items.map((item) => Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              item['title']!,
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              item['text']!,
+                              style: const TextStyle(
+                                fontSize: 17,
+                                height: 1.6,
+                                color: const Color(0xFFE8E8E8),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )).toList(),
                   ),
-                ),
+                )
+              : Padding(
+                  padding: const EdgeInsets.only(top: 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: items.map((item) => Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item['title']!,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            item['text']!,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              height: 1.6,
+                              color: const Color(0xFFE8E8E8),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )).toList(),
+                  ),
+                );
 
-                const SizedBox(height: 40),
-
-                _serviceCard(
-                  Icons.analytics_outlined,
-                  'Анализ данных',
-                  'Находим закономерности и полезную информацию в больших объёмах данных.',
-                ),
-
-                _serviceCard(
-                  Icons.psychology_outlined,
-                  'AI-модели',
-                  'Создаём модели машинного обучения под конкретные задачи бизнеса.',
-                ),
-
-                _serviceCard(
-                  Icons.auto_graph,
-                  'Прогнозирование',
-                  'Помогаем прогнозировать продажи, спрос и другие важные показатели.',
-                ),
-              ],
-            );
-          }
-
-          return Row(
+          return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(
-                width: 100,
-                child: _number('02'),
-              ),
-
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Что мы делаем',
-                      style: TextStyle(
-                        fontSize: 52,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-
-                    const SizedBox(height: 45),
-
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _serviceCard(
-                            Icons.analytics_outlined,
-                            'Анализ данных',
-                            'Находим закономерности и полезную информацию в больших объёмах данных.',
-                          ),
-                        ),
-
-                        const SizedBox(width: 25),
-
-                        Expanded(
-                          child: _serviceCard(
-                            Icons.psychology_outlined,
-                            'AI-модели',
-                            'Создаём модели машинного обучения под конкретные задачи бизнеса.',
-                          ),
-                        ),
-
-                        const SizedBox(width: 25),
-
-                        Expanded(
-                          child: _serviceCard(
-                            Icons.auto_graph,
-                            'Прогнозирование',
-                            'Помогаем прогнозировать продажи, спрос и другие важные показатели.',
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
+              header,
+              const SizedBox(height: 40),
+              imageRow,
+              labelsRow,
             ],
           );
         },
@@ -409,73 +316,19 @@ class MachineLearningPage extends StatelessWidget {
     );
   }
 
-  Widget _serviceCard(
-    IconData icon,
-    String title,
-    String text,
-  ) {
-    return Container(
-      padding: const EdgeInsets.all(30),
-      margin: const EdgeInsets.only(bottom: 20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(
-          color: const Color(0xFFE5E5E5),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            icon,
-            size: 42,
-            color: purple,
-          ),
-
-          const SizedBox(height: 25),
-
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-
-          const SizedBox(height: 15),
-
-          Text(
-            text,
-            style: const TextStyle(
-              fontSize: 16,
-              height: 1.6,
-              color: Colors.black54,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProcess() {
+  Widget _buildProcess(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(
-        horizontal: 60,
-        vertical: 100,
-      ),
+      padding: responsiveSectionInsets(context, vertical: 100),
       child: Column(
         children: [
-          _number('03'),
-
-          const SizedBox(height: 20),
-
-          const Text(
+          Text(
             'Как мы работаем',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 48,
+              fontSize: responsiveHeadingSize(context, desktop: 48),
               fontWeight: FontWeight.w500,
+              color: Colors.white,
             ),
           ),
 
@@ -487,18 +340,21 @@ class MachineLearningPage extends StatelessWidget {
             alignment: WrapAlignment.center,
             children: [
               _processCard(
+                context,
                 '01',
                 'Задача',
                 'Изучаем бизнес-задачу и определяем, где машинное обучение принесёт пользу.',
               ),
 
               _processCard(
+                context,
                 '02',
                 'Данные',
                 'Собираем, очищаем и подготавливаем данные для обучения модели.',
               ),
 
               _processCard(
+                context,
                 '03',
                 'Модель',
                 'Обучаем и тестируем модель, после чего внедряем её в проект.',
@@ -511,18 +367,19 @@ class MachineLearningPage extends StatelessWidget {
   }
 
   Widget _processCard(
+    BuildContext context,
     String number,
     String title,
     String text,
   ) {
     return Container(
-      width: 300,
+      width: MediaQuery.sizeOf(context).width < 360
+          ? MediaQuery.sizeOf(context).width - 56
+          : 300,
       padding: const EdgeInsets.all(30),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7F7F7),
-        border: Border.all(
-          color: const Color(0xFFE5E5E5),
-        ),
+        color: Colors.transparent,
+        border: Border.all(color: const Color(0xFFE5E5E5)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -530,7 +387,7 @@ class MachineLearningPage extends StatelessWidget {
           Text(
             number,
             style: TextStyle(
-              fontSize: 17,
+              fontSize: 19,
               fontWeight: FontWeight.bold,
               color: purple,
             ),
@@ -540,10 +397,7 @@ class MachineLearningPage extends StatelessWidget {
 
           Text(
             title,
-            style: const TextStyle(
-              fontSize: 25,
-              fontWeight: FontWeight.w500,
-            ),
+            style: const TextStyle(fontSize: 25, fontWeight: FontWeight.w500, color: Colors.white),
           ),
 
           const SizedBox(height: 15),
@@ -551,9 +405,9 @@ class MachineLearningPage extends StatelessWidget {
           Text(
             text,
             style: const TextStyle(
-              fontSize: 15,
+              fontSize: 17,
               height: 1.6,
-              color: Colors.black54,
+              color: const Color(0xFFE8E8E8),
             ),
           ),
         ],
@@ -561,33 +415,20 @@ class MachineLearningPage extends StatelessWidget {
     );
   }
 
-  Widget _number(String number) {
-    return Text(
-      number,
-      style: TextStyle(
-        fontSize: 18,
-        fontWeight: FontWeight.bold,
-        color: purple,
-      ),
-    );
-  }
-
   Widget _buildContact(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(
-        horizontal: 60,
-        vertical: 100,
-      ),
+      padding: responsiveSectionInsets(context, vertical: 100),
       child: Column(
         children: [
-          const Text(
+          Text(
             'Есть идея\nдля AI-проекта?',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 55,
+              fontSize: responsiveHeadingSize(context, desktop: 55),
               fontWeight: FontWeight.w500,
               height: 1.1,
+              color: Colors.white,
             ),
           ),
 
@@ -595,10 +436,7 @@ class MachineLearningPage extends StatelessWidget {
 
           const Text(
             'Расскажите нам о вашей задаче',
-            style: TextStyle(
-              fontSize: 18,
-              color: Colors.black54,
-            ),
+            style: TextStyle(fontSize: 18, color: const Color(0xFFE8E8E8)),
           ),
 
           const SizedBox(height: 35),
@@ -616,9 +454,7 @@ class MachineLearningPage extends StatelessWidget {
             ),
             child: const Text(
               'Связаться с нами',
-              style: TextStyle(
-                fontSize: 16,
-              ),
+              style: TextStyle(fontSize: 16),
             ),
           ),
         ],
@@ -626,3 +462,5 @@ class MachineLearningPage extends StatelessWidget {
     );
   }
 }
+
+

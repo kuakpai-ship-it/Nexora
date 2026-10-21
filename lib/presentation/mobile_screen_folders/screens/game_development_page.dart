@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:nexora/presentation/widgets/contacts_widget.dart';
+import 'package:nexora/presentation/widgets/keyboard_scrollable.dart';
+import 'package:nexora/presentation/widgets/segment_info.dart';
+import 'package:nexora/presentation/widgets/service_page_header.dart';
+import 'package:nexora/presentation/widgets/responsive_layout.dart';
+import 'package:nexora/presentation/widgets/scroll_reveal.dart';
 
 class GameDevelopmentPage extends StatelessWidget {
   const GameDevelopmentPage({super.key});
@@ -9,117 +14,59 @@ class GameDevelopmentPage extends StatelessWidget {
   void _showContacts(BuildContext context) {
     showDialog(
       context: context,
+      barrierColor: Colors.white,
       builder: (context) {
         return const ContactsWidget();
       },
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(
-        horizontal: 60,
-        vertical: 22,
-      ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          bottom: BorderSide(color: Color(0xFFE8E8E8)),
-        ),
-      ),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: const Text(
-              'NEXORA',
-              style: TextStyle(
-                fontSize: 23,
-                fontWeight: FontWeight.w800,
-                color: purple,
-                letterSpacing: 1,
-              ),
-            ),
-          ),
-          const Spacer(),
-          ElevatedButton(
-            onPressed: () => _showContacts(context),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: purple,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 22,
-                vertical: 15,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(5),
-              ),
-            ),
-            child: const Text(
-              'Связаться',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.transparent,
 
-      body: Column(
-        children: [
-          _buildHeader(context),
+      body: KeyboardScrollable(
+        builder: (context, controller) => SingleChildScrollView(
+          controller: controller,
+          child: Column(
+            children: [
+              const ServicePageHeader(),
+              // ================= HERO =================
 
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-
-                  // ================= HERO =================
-
-                  _GameHero(
-                    onContact: () {
-                      _showContacts(context);
-                    },
+              ScrollReveal(
+                child: _GameHero(
+                  onContact: () => showDialog(
+                    context: context,
+                    barrierColor: Colors.black54,
+                    builder: (_) => const OrderRequestWidget(),
                   ),
-
-                  // ================= TYPES =================
-
-                  _GameTypes(),
-
-                  // ================= TECHNOLOGIES =================
-
-                  _GameTechnologies(),
-
-                  // ================= PROJECTS =================
-
-                  _GameProjects(),
-
-                  // ================= TEAM =================
-
-                  _GameTeam(),
-
-                  // ================= CONTACT =================
-
-                  _GameContact(
-                    onContact: () {
-                      _showContacts(context);
-                    },
-                  ),
-                ],
+                ),
               ),
-            ),
+
+              // ================= TYPES =================
+              ScrollReveal(child: _GameTypes()),
+
+              // ================= TECHNOLOGIES =================
+              ScrollReveal(child: _GameTechnologies()),
+
+              // ================= PROJECTS =================
+              ScrollReveal(child: _GameProjects()),
+
+              // ================= TEAM =================
+              ScrollReveal(child: _GameTeam()),
+
+              // ================= CONTACT =================
+              ScrollReveal(
+                child: _GameContact(
+                  onContact: () {
+                    _showContacts(context);
+                  },
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -132,35 +79,27 @@ class GameDevelopmentPage extends StatelessWidget {
 class _GameHero extends StatelessWidget {
   final VoidCallback onContact;
 
-  const _GameHero({
-    required this.onContact,
-  });
+  const _GameHero({required this.onContact});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      constraints: const BoxConstraints(
-        minHeight: 650,
-      ),
-      padding: const EdgeInsets.symmetric(
-        horizontal: 60,
-        vertical: 70,
-      ),
+      constraints: const BoxConstraints(minHeight: 650),
+      padding: responsiveSectionInsets(context, vertical: 70),
       child: LayoutBuilder(
         builder: (context, constraints) {
-
           if (constraints.maxWidth < 800) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-
-                const Text(
+                Text(
                   'GAME\nDEVELOPMENT',
                   style: TextStyle(
-                    fontSize: 48,
+                    fontSize: responsiveHeadingSize(context, desktop: 48),
                     fontWeight: FontWeight.w500,
                     height: 1.05,
+                    color: Colors.white,
                   ),
                 ),
 
@@ -171,9 +110,9 @@ class _GameHero extends StatelessWidget {
                   'и игровые механики для мобильных '
                   'устройств и компьютеров.',
                   style: TextStyle(
-                    fontSize: 17,
+                    fontSize: 19,
                     height: 1.6,
-                    color: Colors.black54,
+                    color: const Color(0xFFE8E8E8),
                   ),
                 ),
 
@@ -190,9 +129,7 @@ class _GameHero extends StatelessWidget {
                       borderRadius: BorderRadius.circular(5),
                     ),
                   ),
-                  child: const Text(
-                    'Создать игру',
-                  ),
+                  child: const Text('Создать игру'),
                 ),
 
                 const SizedBox(height: 50),
@@ -204,19 +141,18 @@ class _GameHero extends StatelessWidget {
 
           return Row(
             children: [
-
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-
                     const Text(
                       'GAME\nDEVELOPMENT',
                       style: TextStyle(
                         fontSize: 65,
                         fontWeight: FontWeight.w500,
                         height: 1.05,
+                        color: Colors.white,
                       ),
                     ),
 
@@ -231,7 +167,7 @@ class _GameHero extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 18,
                           height: 1.6,
-                          color: Colors.black54,
+                          color: const Color(0xFFE8E8E8),
                         ),
                       ),
                     ),
@@ -251,9 +187,7 @@ class _GameHero extends StatelessWidget {
                       ),
                       child: const Text(
                         'Создать игру',
-                        style: TextStyle(
-                          fontSize: 17,
-                        ),
+                        style: TextStyle(fontSize: 19),
                       ),
                     ),
                   ],
@@ -262,9 +196,7 @@ class _GameHero extends StatelessWidget {
 
               const SizedBox(width: 50),
 
-              const Expanded(
-                child: _GameIllustration(),
-              ),
+              const Expanded(child: _GameIllustration()),
             ],
           );
         },
@@ -287,31 +219,22 @@ class _GameIllustration extends StatelessWidget {
         width: 500,
         height: 400,
         decoration: BoxDecoration(
-          color: const Color(0xFFF7F7F7),
-          border: Border.all(
-            color: const Color(0xFF4412A7),
-          ),
+          color: Colors.transparent,
+          border: Border.all(color: const Color(0xFF4412A7)),
         ),
         child: Stack(
           alignment: Alignment.center,
           children: [
-
             Positioned(
               top: 35,
               left: 35,
-              child: _Square(
-                size: 80,
-                icon: Icons.videogame_asset,
-              ),
+              child: _Square(size: 80, icon: Icons.videogame_asset),
             ),
 
             Positioned(
               bottom: 35,
               right: 35,
-              child: _Square(
-                size: 80,
-                icon: Icons.gamepad,
-              ),
+              child: _Square(size: 80, icon: Icons.gamepad),
             ),
 
             Container(
@@ -322,7 +245,7 @@ class _GameIllustration extends StatelessWidget {
                 borderRadius: BorderRadius.circular(35),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.15),
+                    color: Colors.black.withValues(alpha: 0.15),
                     blurRadius: 30,
                     offset: const Offset(0, 15),
                   ),
@@ -359,10 +282,7 @@ class _Square extends StatelessWidget {
   final double size;
   final IconData icon;
 
-  const _Square({
-    required this.size,
-    required this.icon,
-  });
+  const _Square({required this.size, required this.icon});
 
   @override
   Widget build(BuildContext context) {
@@ -371,15 +291,9 @@ class _Square extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border.all(
-          color: const Color(0xFF4412A7),
-        ),
+        border: Border.all(color: const Color(0xFF4412A7)),
       ),
-      child: Icon(
-        icon,
-        color: const Color(0xFF4412A7),
-        size: 35,
-      ),
+      child: Icon(icon, color: const Color(0xFF4412A7), size: 35),
     );
   }
 }
@@ -389,7 +303,6 @@ class _Square extends StatelessWidget {
 // ======================================================
 
 class _GameTypes extends StatelessWidget {
-
   final List<String> types = const [
     '2D игры',
     '3D игры',
@@ -399,42 +312,50 @@ class _GameTypes extends StatelessWidget {
     'Стратегии',
   ];
 
+  static const List<String> _typeImages = [
+    'assets/images/2dlogo.png',
+    'assets/images/3dlogo.png',
+    'assets/images/mobilegamelogo.png',
+    'assets/images/arcadelogo.png',
+    'assets/images/brainlogo.png',
+    'assets/images/strategylogo.png',
+  ];
+
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      color: const Color(0xFFF7F7F7),
-      padding: const EdgeInsets.symmetric(
-        horizontal: 60,
-        vertical: 80,
-      ),
+      color: Colors.transparent,
+      padding: responsiveSectionInsets(context, vertical: 80),
       child: Container(
-        padding: const EdgeInsets.all(50),
+        clipBehavior: Clip.hardEdge,
         decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border.all(
-            color: const Color(0xFF4412A7),
-          ),
+          color: Colors.transparent,
+          border: Border.all(color: const Color(0xFF4412A7)),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Stack(
           children: [
-
-            const Text(
-              '01',
-              style: TextStyle(
-                color: Color(0xFF4412A7),
-                fontWeight: FontWeight.bold,
+            Positioned.fill(
+              child: Image.asset(
+                'assets/images/Gamebiglogo.png',
+                fit: BoxFit.cover,
+                filterQuality: FilterQuality.high,
               ),
             ),
-
-            const SizedBox(height: 45),
-
-            const Text(
+            Positioned.fill(
+              child: ColoredBox(color: const Color(0xFF0D0520).withValues(alpha: 0.50)),
+            ),
+            Padding(
+          padding: EdgeInsets.all(responsiveCardPadding(context)),
+          child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
               'Создаём игры',
               style: TextStyle(
-                fontSize: 52,
+                fontSize: responsiveHeadingSize(context),
                 fontWeight: FontWeight.w500,
+                color: Colors.white,
               ),
             ),
 
@@ -442,17 +363,13 @@ class _GameTypes extends StatelessWidget {
 
             const Text(
               'От идеи и концепции до готового игрового продукта.',
-              style: TextStyle(
-                fontSize: 17,
-                color: Colors.black54,
-              ),
+              style: TextStyle(fontSize: 19, color: const Color(0xFFE8E8E8)),
             ),
 
             const SizedBox(height: 55),
 
             LayoutBuilder(
               builder: (context, constraints) {
-
                 int columns = 3;
 
                 if (constraints.maxWidth < 800) {
@@ -467,22 +384,26 @@ class _GameTypes extends StatelessWidget {
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: types.length,
-                  gridDelegate:
-                      SliverGridDelegateWithFixedCrossAxisCount(
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: columns,
                     crossAxisSpacing: 20,
                     mainAxisSpacing: 20,
                     childAspectRatio: 2.5,
                   ),
                   itemBuilder: (context, index) {
-
                     return _GameTypeCard(
+                      index: index,
                       number: '0${index + 1}',
                       title: types[index],
+                      imagePath: _typeImages[index],
+                      onTap: () => showSegmentInfo(context, types[index]),
                     );
                   },
                 );
               },
+            ),
+          ],
+        ),
             ),
           ],
         ),
@@ -498,10 +419,16 @@ class _GameTypes extends StatelessWidget {
 class _GameTypeCard extends StatefulWidget {
   final String number;
   final String title;
+  final VoidCallback onTap;
+  final int index;
+  final String imagePath;
 
   const _GameTypeCard({
     required this.number,
     required this.title,
+    required this.onTap,
+    required this.index,
+    required this.imagePath,
   });
 
   @override
@@ -509,73 +436,51 @@ class _GameTypeCard extends StatefulWidget {
 }
 
 class _GameTypeCardState extends State<_GameTypeCard> {
-
   bool isHover = false;
 
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
-      onEnter: (_) {
-        setState(() {
-          isHover = true;
-        });
-      },
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => isHover = true),
+      onExit: (_) => setState(() => isHover = false),
 
-      onExit: (_) {
-        setState(() {
-          isHover = false;
-        });
-      },
-
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(20),
-
-        decoration: BoxDecoration(
-          color: isHover
-              ? const Color(0xFF4412A7)
-              : Colors.white,
-
-          border: Border.all(
-            color: isHover
-                ? const Color(0xFF4412A7)
-                : const Color(0xFFE0E0E0),
-          ),
-        ),
-
-        child: Row(
-          children: [
-
-            Text(
-              widget.number,
-              style: TextStyle(
-                color: isHover
-                    ? Colors.white70
-                    : const Color(0xFF4412A7),
-              ),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          decoration: BoxDecoration(
+            color: isHover ? const Color(0xFF4412A7) : Colors.transparent,
+            border: Border.all(
+              color: isHover ? const Color(0xFF7C3AED) : const Color(0xFF2D1B69),
             ),
+            borderRadius: BorderRadius.circular(6),
+          ),
 
-            const SizedBox(width: 20),
-
-            Expanded(
-              child: Text(
-                widget.title,
-                style: TextStyle(
-                  fontSize: 18,
-                  color: isHover
-                      ? Colors.white
-                      : Colors.black,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              // Фоновое изображение — полная яркость
+              ClipRRect(
+                borderRadius: BorderRadius.circular(5),
+                child: Image.asset(
+                  widget.imagePath,
+                  fit: BoxFit.cover,
                 ),
               ),
-            ),
 
-            Icon(
-              Icons.arrow_forward,
-              color: isHover
-                  ? Colors.white
-                  : const Color(0xFF4412A7),
-            ),
-          ],
+              // Только стрелка в углу
+              Positioned(
+                right: 14,
+                bottom: 12,
+                child: Icon(
+                  Icons.arrow_forward,
+                  color: isHover ? Colors.white : const Color(0xFFE8E8E8),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -587,126 +492,112 @@ class _GameTypeCardState extends State<_GameTypeCard> {
 // ======================================================
 
 class _GameTechnologies extends StatelessWidget {
-
   final List<Map<String, dynamic>> technologies = const [
-    {
-      'name': 'Unity',
-      'icon': Icons.games,
-    },
-    {
-      'name': 'Flutter',
-      'icon': Icons.flutter_dash,
-    },
-    {
-      'name': 'Java',
-      'icon': Icons.code,
-    },
-    {
-      'name': 'Swift',
-      'icon': Icons.phone_iphone,
-    },
-    {
-      'name': 'Kotlin',
-      'icon': Icons.android,
-    },
-    {
-      'name': 'Firebase',
-      'icon': Icons.cloud,
-    },
-    {
-      'name': 'Python',
-      'icon': Icons.data_object,
-    },
-    {
-      'name': 'JavaScript',
-      'icon': Icons.javascript,
-    },
+    {'name': 'Unity',      'image': 'assets/images/unitylogo.png'},
+    {'name': 'Flutter',    'image': 'assets/images/image.png'},
+    {'name': 'Java',       'image': 'assets/images/javascript.png'},
+    {'name': 'Swift',      'image': 'assets/images/swiftlogo.png'},
+    {'name': 'Kotlin',     'image': 'assets/images/kotlinlogo.png'},
+    {'name': 'Firebase',   'image': 'assets/images/firebaselogo.png'},
+    {'name': 'Python',     'image': 'assets/images/pythonphoto.png'},
+    {'name': 'JavaScript', 'image': 'assets/images/javascript.png'},
   ];
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(
-        horizontal: 60,
-        vertical: 80,
-      ),
+      padding: responsiveSectionInsets(context, vertical: 80),
       child: Container(
-        padding: const EdgeInsets.all(50),
+        clipBehavior: Clip.hardEdge,
         decoration: BoxDecoration(
-          border: Border.all(
-            color: const Color(0xFF4412A7),
-          ),
+          border: Border.all(color: const Color(0xFF4412A7)),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Stack(
           children: [
-
-            const Text(
-              '02',
-              style: TextStyle(
-                color: Color(0xFF4412A7),
-                fontWeight: FontWeight.bold,
+            Positioned.fill(
+              child: Image.asset(
+                'assets/images/languege3.png',
+                fit: BoxFit.cover,
+                filterQuality: FilterQuality.high,
               ),
             ),
-
-            const SizedBox(height: 45),
-
-            const Text(
+            Positioned.fill(
+              child: ColoredBox(color: const Color(0xFF0D0520).withValues(alpha: 0.50)),
+            ),
+            Padding(
+          padding: EdgeInsets.all(responsiveCardPadding(context)),
+          child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
               'Технологии',
               style: TextStyle(
-                fontSize: 52,
+                fontSize: responsiveHeadingSize(context),
                 fontWeight: FontWeight.w500,
+                color: Colors.white,
               ),
             ),
 
             const SizedBox(height: 50),
 
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: technologies.length,
-              gridDelegate:
-                  const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 4,
-                crossAxisSpacing: 15,
-                mainAxisSpacing: 15,
-                childAspectRatio: 2.5,
-              ),
-              itemBuilder: (context, index) {
-
-                return Container(
-                  padding: const EdgeInsets.all(18),
-
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    border: Border.all(
-                      color: const Color(0xFFE0E0E0),
-                    ),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final columns = constraints.maxWidth < 360
+                    ? 1
+                    : constraints.maxWidth < 700
+                    ? 2
+                    : constraints.maxWidth < 1000
+                    ? 3
+                    : 4;
+                return GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: technologies.length,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: columns,
+                    crossAxisSpacing: 15,
+                    mainAxisSpacing: 15,
+                    childAspectRatio: 2.5,
                   ),
-
-                  child: Row(
-                    children: [
-
-                      Icon(
-                        technologies[index]['icon'],
-                        color: const Color(0xFF4412A7),
-                      ),
-
-                      const SizedBox(width: 15),
-
-                      Expanded(
-                        child: Text(
-                          technologies[index]['name'],
-                          style: const TextStyle(
-                            fontSize: 17,
-                          ),
+                  itemBuilder: (context, index) {
+                    final name = technologies[index]['name'] as String;
+                    final image = technologies[index]['image'] as String;
+                    final isSwift = name == 'Swift';
+                    return InkWell(
+                      onTap: () => showSegmentInfo(context, name),
+                      child: Container(
+                        clipBehavior: Clip.antiAlias,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: const Color(0xFF2D1B69)),
+                          color: isSwift ? Colors.black : null,
+                        ),
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            Image.asset(
+                              image,
+                              fit: isSwift ? BoxFit.contain : BoxFit.cover,
+                            ),
+                            const Positioned(
+                              right: 14,
+                              bottom: 12,
+                              child: Icon(
+                                Icons.arrow_forward,
+                                color: Colors.white,
+                                size: 20,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ],
-                  ),
+                    );
+                  },
                 );
               },
+            ),
+          ],
+        ),
             ),
           ],
         ),
@@ -720,27 +611,26 @@ class _GameTechnologies extends StatelessWidget {
 // ======================================================
 
 class _GameProjects extends StatelessWidget {
-
   final List<Map<String, dynamic>> projects = const [
     {
       'title': 'Brain Game',
       'text': 'Игра на логику и эрудицию.',
-      'icon': Icons.psychology,
+      'image': 'assets/images/braingamelogo.png',
     },
     {
       'title': 'Color World',
       'text': 'Творческая игра с цветами.',
-      'icon': Icons.palette,
+      'image': 'assets/images/colorgamelogo.png',
     },
     {
       'title': 'Sound Guess',
       'text': 'Музыкальная викторина.',
-      'icon': Icons.music_note,
+      'image': 'assets/images/musiclgamelogo.png',
     },
     {
       'title': 'Space Quest',
       'text': 'Приключение в космическом мире.',
-      'icon': Icons.rocket_launch,
+      'image': 'assets/images/spacegamelogo.png',
     },
   ];
 
@@ -748,30 +638,17 @@ class _GameProjects extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      color: const Color(0xFFF7F7F7),
-      padding: const EdgeInsets.symmetric(
-        horizontal: 60,
-        vertical: 80,
-      ),
+      color: Colors.transparent,
+      padding: responsiveSectionInsets(context, vertical: 80),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
-          const Text(
-            '03',
-            style: TextStyle(
-              color: Color(0xFF4412A7),
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-
-          const SizedBox(height: 35),
-
-          const Text(
+          Text(
             'Игровые проекты',
             style: TextStyle(
-              fontSize: 52,
+              fontSize: responsiveHeadingSize(context),
               fontWeight: FontWeight.w500,
+              color: Colors.white,
             ),
           ),
 
@@ -779,7 +656,6 @@ class _GameProjects extends StatelessWidget {
 
           LayoutBuilder(
             builder: (context, constraints) {
-
               int columns = 2;
 
               if (constraints.maxWidth < 700) {
@@ -792,8 +668,7 @@ class _GameProjects extends StatelessWidget {
 
                 itemCount: projects.length,
 
-                gridDelegate:
-                    SliverGridDelegateWithFixedCrossAxisCount(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: columns,
                   crossAxisSpacing: 25,
                   mainAxisSpacing: 25,
@@ -801,11 +676,10 @@ class _GameProjects extends StatelessWidget {
                 ),
 
                 itemBuilder: (context, index) {
-
                   return _GameProjectCard(
                     title: projects[index]['title'],
                     text: projects[index]['text'],
-                    icon: projects[index]['icon'],
+                    image: projects[index]['image'],
                   );
                 },
               );
@@ -824,89 +698,92 @@ class _GameProjects extends StatelessWidget {
 class _GameProjectCard extends StatefulWidget {
   final String title;
   final String text;
-  final IconData icon;
+  final String image;
 
   const _GameProjectCard({
     required this.title,
     required this.text,
-    required this.icon,
+    required this.image,
   });
 
   @override
-  State<_GameProjectCard> createState() =>
-      _GameProjectCardState();
+  State<_GameProjectCard> createState() => _GameProjectCardState();
 }
 
 class _GameProjectCardState extends State<_GameProjectCard> {
-
   bool isHover = false;
 
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
-      onEnter: (_) {
-        setState(() {
-          isHover = true;
-        });
-      },
-
-      onExit: (_) {
-        setState(() {
-          isHover = false;
-        });
-      },
+      onEnter: (_) => setState(() => isHover = true),
+      onExit: (_) => setState(() => isHover = false),
 
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
-
-        padding: const EdgeInsets.all(30),
-
         decoration: BoxDecoration(
-          color: isHover
-              ? const Color(0xFF4412A7)
-              : Colors.white,
-
           border: Border.all(
-            color: isHover
-                ? const Color(0xFF4412A7)
-                : const Color(0xFFE0E0E0),
+            color: isHover ? const Color(0xFF7C3AED) : const Color(0xFF2D1B69),
           ),
+          borderRadius: BorderRadius.circular(8),
         ),
 
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Stack(
+          fit: StackFit.expand,
           children: [
-
-            Icon(
-              widget.icon,
-              size: 45,
-              color: isHover
-                  ? Colors.white
-                  : const Color(0xFF4412A7),
-            ),
-
-            const Spacer(),
-
-            Text(
-              widget.title,
-              style: TextStyle(
-                fontSize: 25,
-                fontWeight: FontWeight.w500,
-                color: isHover
-                    ? Colors.white
-                    : Colors.black,
+            // Изображение на весь фон
+            ClipRRect(
+              borderRadius: BorderRadius.circular(7),
+              child: Image.asset(
+                widget.image,
+                fit: BoxFit.cover,
               ),
             ),
 
-            const SizedBox(height: 10),
+            // Затемнение снизу для читаемости текста
+            ClipRRect(
+              borderRadius: BorderRadius.circular(7),
+              child: const DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Color(0x00000000),
+                      Color(0xCC000000),
+                    ],
+                  ),
+                ),
+              ),
+            ),
 
-            Text(
-              widget.text,
-              style: TextStyle(
-                fontSize: 15,
-                color: isHover
-                    ? Colors.white70
-                    : Colors.black54,
+            // Текст снизу
+            Positioned(
+              left: 20,
+              right: 20,
+              bottom: 20,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    widget.title,
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    widget.text,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: const Color(0xFFE8E8E8),
+                      height: 1.4,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -921,7 +798,6 @@ class _GameProjectCardState extends State<_GameProjectCard> {
 // ======================================================
 
 class _GameTeam extends StatelessWidget {
-
   final List<String> team = const [
     'Геймдизайнер',
     'Разработчик',
@@ -934,86 +810,68 @@ class _GameTeam extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(
-        horizontal: 60,
-        vertical: 80,
-      ),
+      padding: responsiveSectionInsets(context, vertical: 80),
       child: Container(
-        padding: const EdgeInsets.all(50),
+        clipBehavior: Clip.hardEdge,
         decoration: BoxDecoration(
-          border: Border.all(
-            color: const Color(0xFF4412A7),
-          ),
+          border: Border.all(color: const Color(0xFF4412A7)),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Stack(
           children: [
-
-            const Text(
-              '04',
-              style: TextStyle(
-                color: Color(0xFF4412A7),
-                fontWeight: FontWeight.bold,
+            Positioned.fill(
+              child: Image.asset(
+                'assets/images/Gamemakerlogo.png',
+                fit: BoxFit.cover,
+                filterQuality: FilterQuality.high,
               ),
             ),
-
-            const SizedBox(height: 40),
-
-            const Text(
+            Positioned.fill(
+              child: ColoredBox(color: const Color(0xFF0D0520).withValues(alpha: 0.50)),
+            ),
+            Padding(
+          padding: EdgeInsets.all(responsiveCardPadding(context)),
+          child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
               'Команда проекта',
               style: TextStyle(
-                fontSize: 52,
+                fontSize: responsiveHeadingSize(context),
                 fontWeight: FontWeight.w500,
+                color: Colors.white,
               ),
             ),
 
             const SizedBox(height: 50),
 
-            ...List.generate(
-              team.length,
-              (index) {
-
-                return Container(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 20,
-                  ),
-                  decoration: const BoxDecoration(
-                    border: Border(
-                      bottom: BorderSide(
-                        color: Color(0xFFE0E0E0),
+            ...List.generate(team.length, (index) {
+              return Container(
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                decoration: const BoxDecoration(
+                  border: Border(bottom: BorderSide(color: Color(0x33FFFFFF))),
+                ),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 60,
+                      child: Text(
+                        '0${index + 1}',
+                        style: const TextStyle(color: Color(0xFF4412A7)),
                       ),
                     ),
-                  ),
-                  child: Row(
-                    children: [
 
-                      SizedBox(
-                        width: 60,
-                        child: Text(
-                          '0${index + 1}',
-                          style: const TextStyle(
-                            color: Color(0xFF4412A7),
-                          ),
-                        ),
+                    Expanded(
+                      child: Text(
+                        team[index],
+                        style: const TextStyle(fontSize: 21, color: Colors.white),
                       ),
-
-                      Expanded(
-                        child: Text(
-                          team[index],
-                          style: const TextStyle(
-                            fontSize: 21,
-                          ),
-                        ),
-                      ),
-
-                      const Icon(
-                        Icons.arrow_forward,
-                        color: Color(0xFF4412A7),
-                      ),
-                    ],
-                  ),
-                );
-              },
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ],
+        ),
             ),
           ],
         ),
@@ -1029,36 +887,23 @@ class _GameTeam extends StatelessWidget {
 class _GameContact extends StatelessWidget {
   final VoidCallback onContact;
 
-  const _GameContact({
-    required this.onContact,
-  });
+  const _GameContact({required this.onContact});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      color: const Color(0xFF4412A7),
-      padding: const EdgeInsets.symmetric(
-        horizontal: 60,
-        vertical: 90,
+      decoration: const BoxDecoration(
+        color: Colors.transparent,
       ),
+      padding: responsiveSectionInsets(context, vertical: 90),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
-          const Text(
-            '05',
-            style: TextStyle(
-              color: Colors.white70,
-            ),
-          ),
-
-          const SizedBox(height: 35),
-
-          const Text(
+          Text(
             'Готовы создать\nсвою игру?',
             style: TextStyle(
-              fontSize: 55,
+              fontSize: responsiveHeadingSize(context, desktop: 55),
               fontWeight: FontWeight.w500,
               height: 1.1,
               color: Colors.white,
@@ -1070,11 +915,7 @@ class _GameContact extends StatelessWidget {
           const Text(
             'Расскажите нам свою идею, '
             'а мы поможем превратить её в игру.',
-            style: TextStyle(
-              fontSize: 17,
-              height: 1.6,
-              color: Colors.white70,
-            ),
+            style: TextStyle(fontSize: 19, height: 1.6, color: const Color(0xFFE8E8E8)),
           ),
 
           const SizedBox(height: 40),
@@ -1082,20 +923,20 @@ class _GameContact extends StatelessWidget {
           ElevatedButton(
             onPressed: onContact,
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: const Color(0xFF4412A7),
+              backgroundColor: const Color(0xFF4412A7),
+              foregroundColor: Colors.white,
               minimumSize: const Size(200, 55),
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(5),
               ),
             ),
-            child: const Text(
-              'Связаться с нами',
-            ),
+            child: const Text('Связаться с нами'),
           ),
         ],
       ),
     );
   }
 }
+
+
