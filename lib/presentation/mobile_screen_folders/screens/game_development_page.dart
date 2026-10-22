@@ -26,12 +26,15 @@ class GameDevelopmentPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.transparent,
 
-      body: KeyboardScrollable(
-        builder: (context, controller) => SingleChildScrollView(
-          controller: controller,
-          child: Column(
-            children: [
-              const ServicePageHeader(),
+      body: Column(
+        children: [
+          const ServicePageHeader(),
+          Expanded(
+            child: KeyboardScrollable(
+              builder: (context, controller) => SingleChildScrollView(
+                controller: controller,
+                child: Column(
+                  children: [
               // ================= HERO =================
 
               ScrollReveal(
@@ -64,14 +67,16 @@ class GameDevelopmentPage extends StatelessWidget {
                   },
                 ),
               ),
-            ],
+                  ],
+                ),
+              ),
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
 }
-
 // ======================================================
 // HERO
 // ======================================================

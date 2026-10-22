@@ -1,89 +1,65 @@
-# Nexora UI Fixes: White Text, iPhone Hero, CTA Redesign
+# Форма заявки OrderRequestWidget с записью в Firestore и восстановленные ссылки контактов
 
-Three UI corrections applied to the Nexora Flutter web project: replacing dark text with white across all public-facing pages (video background visibility), adding a phone illustration to the home hero section, and reshaping the CTA section on the home page to match the service pages pattern.
+Изменение переписывает `OrderRequestWidget` из симуляции (`Future.delayed`) в рабочую форму: валидация обязательных полей, запись документа в коллекцию `orders` Firestore со строго 10 полями, экран успеха и SnackBar при ошибке. Шапка формы приведена к макету (иконка письма `mail_outline`, заголовок «Оставить заявку»), добавлен dropdown услуги с тремя вариантами, поля телефона/имени/фамилии, чекбокс «Представляю компанию» с условным полем компании и многострочный комментарий. Параллельно `ContactsWidget` получил реальные ссылки (Telegram/WhatsApp/телефон) через `url_launcher`, а в `pubspec.yaml` добавлены `cloud_firestore: ^6.10.0` и `url_launcher: ^6.3.3`. Запись в Firestore точно соответствует `firestore.rules` (`hasOnly`+`hasAll`, `status=='new'`, `createdAt==request.time`, `companyName` — пустая строка, не null).
 
-Watch for: `_GameTechnologies` technology card names have no explicit text color — they default to dark on a white card background, which is intentional (plan explicitly marks these "не менять"). All five blocking criteria pass cleanly.
+**Watch for:** обработка ошибок отправки ловит только `FirebaseException` — любая другая ошибка оставит кнопку в вечном loading без SnackBar; `verification.md` неверно утверждает, что `ContactsWidget` не менялся (он менялся, но это соответствует intent пользователя); новая строка 284 использует устаревший `withOpacity` (info-level, в стиле файла).
 
 **Verdict**: APPROVED
 
----
-
 ## High-level view
 
-`site_video_background.dart` carries the critical syntax fix: `?widget.child,` replaced with `if (widget.child != null) widget.child!,`. The file is valid Dart and the project builds.
+Запись в Firestore построена ровно под контракт `firestore.rules`: map в `_submit` содержит те же 10 ключей, что требует `hasOnly`/`hasAll`, без лишних и недостающих. Критичные ограничения соблюдены — `status` всегда `'new'`, `createdAt` через `FieldValue.serverTimestamp()`, `companyName` для физлица — пустая строка, не null.
 
-Home hero now renders `_PhoneIllustration` on the right (desktop, ≥850px) or bottom (mobile) via an adaptive Row/Column. The illustration is a pure-Flutter phone mockup, no asset dependency, copied from `mobile_development_page.dart`.
+Обработка ошибок в `_submit` узкая: ловится только `FirebaseException` (сброс `_submitting` + SnackBar), а любой другой throwable оставит форму в вечном loading без отклика. План явно задавал этот паттерн, и FlutterFire стабильно бросает `FirebaseException`, так что рабочие ошибки покрыты — пробел в защите от нестандартных случаев.
 
-CTA section `_HomeContactSection` matches the service-page pattern: purple `Color(0xFF4412A7)` background, `Colors.white` heading, `Colors.white70` subtext, white `ElevatedButton` with `foregroundColor: Color(0xFF4412A7)`. Column is left-aligned, center alignment removed.
+`ContactsWidget` изменён вопреки плану «не трогать»: в HEAD ссылки были заглушками, кодер заменил их на реальные (Telegram/WhatsApp/`tel:`) через `url_launcher` — оправданное отклонение, совпадающее с требованием пользователя восстановить контакты. Но `verification.md` утверждает, что виджет «НЕ изменялся», что расходится с diff.
 
-Text color corrections are confirmed across all eight checked files. The only dark text remaining on public pages is inside explicitly white-background card widgets — `_TeamCard` (about page), `_GameTypeCard`/`_GameProjectCard` (game page, `isHover=false`), `_GameTechnologies` tile, `_serviceCard` (ML page) — all of which sit on white surfaces and are correctly excluded from the white-text rule.
+Dropdown услуги сделан неконтролируемым (`initialValue` вместо устаревшего `value`), а `_selectedService` дублируется через `onChanged`; оба значения обновляются атомарно, поэтому `_selectedService!` в map безопасен (до него доходят только после `validate()`). Валидация шире звёздочек в подписях: обязательны также услуга и телефон — осознанное решение, зафиксированное в плане.
 
-`flutter analyze` reports 7 info-level deprecation notices, all in `admin_login_page.dart` and `contacts_widget.dart`, both excluded from modification scope. Zero errors in any modified file.
-
----
+Проверка опиралась на статический анализ и сборку (`flutter analyze` — 0 errors/0 warnings, 3 info-level; `flutter build web --release` — успех по verification.md), а не на автотесты; логика валидации, путь записи в Firestore и состояния успеха/ошибки тестами не покрыты.
 
 <details>
-<summary>Issues (0)</summary>
+<summary>Issues (3)</summary>
 
-No blocking issues found.
+1. **Узкая обработка ошибок отправки** — `_submit` ловит только `FirebaseException`; любой другой throwable оставит `_submitting=true` (кнопка в вечном loading, форма без отклика). Добавить catch-all, который сбрасывает `_submitting` и показывает общий SnackBar.
+2. **Неверное утверждение в verification.md** — документ заявляет, что `ContactsWidget` и `_HoverContactCard` «НЕ изменялись», но git diff показывает правку `ContactsWidget` (ссылки, подписи, инфо-блок, удалена нижняя кнопка «Закрыть»). Код правилен, но документ вводит ревьюера в заблуждение; поправить формулировку.
+3. **Новый устаревший API** — строка 284 (`disabledBackgroundColor: purple.withOpacity(0.6)`) добавляет новый `deprecated_member_use` уровня info. В стиле остального файла, но для forward-compat лучше `.withValues(...)`.
 
 </details>
 
 <details>
 <summary>Details</summary>
 
-### Syntax fix in `site_video_background.dart`
+### Контракт записи в Firestore vs firestore.rules
 
-The invalid `?widget.child,` spread operator replaced with:
+Map в `_submit` построена ровно из 10 ключей — `services`, `clientType`, `clientName`, `firstName`, `lastName`, `companyName`, `phone`, `message`, `status`, `createdAt` — и совпадает со списком в `firestore.rules`, где `hasOnly` и `hasAll` вместе требуют точно этот набор (ни лишних, ни недостающих). Проверка построчно:
 
-```dart
-if (widget.child != null) widget.child!,
-```
+- `services: _selectedService!` — строка из фиксированного списка; валидатор dropdown не пропускает null, так что bang безопасен.
+- `clientType: _isCompany ? 'company' : 'individual'` — попадает в разрешённое правилами множество `['company','individual']`.
+- `companyName: _isCompany ? _companyNameController.text.trim() : ''` — для физлица пустая строка, что проходит `companyName is string`; критично, что не null (правила требуют строку).
+- `phone`/`message` — `trim()` строки; `message` может быть пустым, правила это допускают.
+- `status: 'new'` — всегда, совпадает с `status == 'new'`.
+- `createdAt: FieldValue.serverTimestamp()` — серверная метка, что соответствует `createdAt == request.time`.
+- `clientName: '$firstName $lastName'` — строка, оба компонента обрезаны.
 
-Syntactically valid, semantically equivalent — conditionally includes the child in the Stack children list only when non-null.
+Добавление любого лишнего ключа (например, `uid` или клиентского таймстампа) сломало бы запись на уровне `hasOnly` — поэтому точность набора полей здесь критичнее, чем обычно.
 
-### Phone illustration in home hero
+### Обработка ошибок в _submit
 
-`_HomeHero` restructured from `ConstrainedBox(maxWidth: 760)` + `Column` to an adaptive layout. `_heroText` helper extracted. `_PhoneIllustration` class added at file end, identical to `mobile_development_page.dart`'s version. Hero heading `Colors.white`, subtitle `Colors.white70`.
+`on FirebaseException catch (e)` сбрасывает `_submitting` и показывает `SnackBar` с `e.message`. Но любой throwable другого типа (например, неожиданная платформенная ошибка, не обёрнутая в `FirebaseException`) пройдёт мимо catch: `_submitting` останется `true`, кнопка останется disabled со спиннером, SnackBar не покажется, и форма не даст повторить без закрытия диалога. Реалистично FlutterFire кидает `FirebaseException` (permission-denied, unavailable и т.п.), так что рабочие ошибки покрыты; риск — в нестандартных случаях. Стоит добавить catch-all (`catch (_)`) с тем же сбросом `_submitting` и общим сообщением.
 
-### CTA section matches service page pattern
+### Восстановление ContactsWidget и расхождение с verification.md
 
-`_HomeContactSection`: heading gets `color: Colors.white` (was missing), subtitle `Colors.black54` → `Colors.white70`, button switches from `backgroundColor: Color(0xFF4412A7)` (invisible on purple container) to `backgroundColor: Colors.white` / `foregroundColor: Color(0xFF4412A7)`. `Column.crossAxisAlignment` → `CrossAxisAlignment.start`, `textAlign: TextAlign.center` removed.
-
-### Text color sweep — confirmed clean
-
-- `about_page.dart`: no `Colors.black*` remaining in public sections. `_buildFooter` uses `Colors.white38` for copyright. `_TeamCard` keeps dark text on white card — correct.
-- `services_section.dart`: all section headers and descriptions white/white70. Dividers `Color(0x33FFFFFF)`.
-- `technologies_section.dart`: heading and description white/white70. Card items use gradient overlay with white text — unchanged.
-- `mobile_development_page.dart`: all hero, services, technologies, process, projects texts white/white70. `_ProjectCard` at `isHover=false` keeps dark text on white — correct.
-- `game_development_page.dart`: all section headers white. `_GameTechnologies` card names have no explicit color (renders dark on white card) — plan says "Не менять," confirmed intentional. `_GameProjectCard`/`_GameTypeCard` at `isHover=false` dark text on white — correct.
-- `machine_learning.dart`: hero, process cards, contact all white/white70. `_serviceCard` keeps `Colors.black54` on white card background — correct per plan.
-
-### `flutter analyze`
-
-7 info-level issues in excluded files only. `withOpacity` is replaced by `withValues(alpha:)` in modified files.
-
-### `web_development_page.dart`
-
-`Scaffold(backgroundColor: Colors.white)` — white background page excluded from dark-text rule. File is unchanged.
+В HEAD ссылки `ContactsWidget` были заглушками (`// Сюда потом добавим ссылку на Telegram`), а кодер заменил их на реальные: `https://t.me/NexoraOrderGroup`, `https://chat.whatsapp.com/CX0VNSLpBwuDzWIfK8E32o`, `tel:+77001234567` — все через `launchUrl`. Diff также меняет подписи карточек, упрощает нижний инфо-блок и удаляет нижнюю кнопку «Закрыть». Это оправданное отклонение от плана (план исходил из неверной посылки, что ссылки уже на месте) и прямо соответствует требованию пользователя восстановить контакты. Проблема в другом: `verification.md` утверждает, что `ContactsWidget` и `_HoverContactCard` «НЕ изменялись», что прямо расходится с diff и вводит ревьюера, опирающегося на документ, в заблуждение.
 
 </details>
 
----
-
-## File map
-
 <details>
-<summary>Changed files</summary>
+<summary>File map</summary>
 
-- `lib/presentation/widgets/site_video_background.dart` — syntax fix: `?widget.child,` → `if (widget.child != null) widget.child!`
-- `lib/presentation/pages/home_page.dart` — hero with phone illustration; CTA section white texts and white button
-- `lib/presentation/pages/about_page.dart` — all public-section texts white/white70; footer copyright white38
-- `lib/presentation/widgets/services_section.dart` — process/services texts white; dividers translucent white
-- `lib/presentation/widgets/technologies_section.dart` — heading and description white/white70
-- `lib/presentation/mobile_screen_folders/screens/mobile_development_page.dart` — hero, services, technologies, process, projects texts white/white70
-- `lib/presentation/mobile_screen_folders/screens/game_development_page.dart` — all section texts white/white70; technology card names intentionally dark on white cards
-- `lib/presentation/mobile_screen_folders/screens/machine_learning.dart` — hero, process, contact texts white/white70
-- `lib/presentation/mobile_screen_folders/screens/web_development_page.dart` — unchanged (white background page, excluded from scope)
+- `lib/presentation/widgets/contacts_widget.dart` — добавлены импорты `cloud_firestore` и `url_launcher`; `OrderRequestWidget` переписан в рабочую форму с записью в Firestore; `ContactsWidget` получил реальные ссылки; `_HoverContactCard` не тронут.
+- `pubspec.yaml` — добавлены `cloud_firestore: ^6.10.0` и `url_launcher: ^6.3.3`.
+
+Полный diff: `git -C c:/Users/PREDATOR/Downloads/nexora2-main/nexora2-main diff HEAD -- lib/presentation/widgets/contacts_widget.dart pubspec.yaml`
 
 </details>

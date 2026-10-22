@@ -1,610 +1,80 @@
-# Nexora — План реализации трёх задач
+# План: восстановление формы заявки OrderRequestWidget с записью в Firestore
+
+Контекст проекта: `c:/Users/PREDATOR/Downloads/nexora2-main/nexora2-main` (Flutter Web, Dart 3.13.5, Flutter 3.47.7). Firebase уже инициализирован в `lib/main.dart` через `Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform)`; web-конфиг присутствует в `lib/firebase_options.dart` (projectId `nexora-3261b-88f1d`). В `pubspec.yaml` есть `firebase_core: ^4.15.0`, `firebase_auth: ^6.7.0`, `url_launcher: ^6.3.3`, но НЕТ `cloud_firestore`. В коде `cloud_firestore`/`FirebaseFirestore` пока не используется нигде (только `firebase_auth` в `admin_login_page.dart`). Ручного Firebase SDK в `web/index.html` нет — FlutterFire-пакеты подключают всё сами, правок веб-конфига не требуется.
+
+`firestore.rules` для коллекции `orders` требует строго 10 полей (`hasOnly` И `hasAll`): `services`, `clientType` (только `'company'`/`'individual'`), `clientName`, `firstName`, `lastName`, `companyName` (строка, для физлица — пустая строка, НЕ null), `phone`, `message`, `status` (только `'new'`), `createdAt` (`== request.time`, то есть `FieldValue.serverTimestamp()`). Документ обязан содержать ровно этот набор полей — никаких лишних и никаких недостающих.
+
+`OrderRequestWidget` используется в 3 местах через `showDialog(..., barrierColor: Colors.black54, builder: (_) => const OrderRequestWidget())`: `lib/presentation/mobile_screen_folders/screens/game_development_page.dart`, `machine_learning.dart`, `mobile_development_page.dart`. Конструктор `const OrderRequestWidget({super.key})` менять нельзя — все вызовы идут через `const`, сигнатура должна остаться такой же.
+
+`ContactsWidget` в том же файле уже содержит правильные реальные ссылки (Telegram `https://t.me/NexoraOrderGroup`, WhatsApp `https://chat.whatsapp.com/CX0VNSLpBwuDzWIfK8E32o`, телефон `+77001234567` через `url_launcher`) — его НЕ трогаем.
+
+Git remote `origin` = `https://github.com/kuakpai-ship-it/Nexora.git`. Требование пользователя: старый GitHub remote оставить нетронутым — НЕ пушить и НЕ менять конфигурацию remote. Коммитить можно локально, пушить нельзя.
 
 ---
 
-## Задача 1: iPhone / телефон в hero-секции главной страницы
+- [ ] 1. Добавить `cloud_firestore` в `pubspec.yaml`.
+      В блок `dependencies:` добавить строку `cloud_firestore: ^6.10.0` (между `firebase_auth` и `google_sign_in` или рядом с другими firebase_*-зависимостями для порядка). Остальные зависимости не трогать. Версия `^6.10.0` совместима с уже установленными `firebase_core: ^4.15.0` и Dart SDK `^3.12.0`.
+      Files: `c:/Users/PREDATOR/Downloads/nexora2-main/nexora2-main/pubspec.yaml`
+      Verify: `flutter pub get` в каталоге проекта — команда завершается без ошибок и резолвит `cloud_firestore`. Затем `flutter pub deps --no-dev | findstr cloud_firestore` (или просмотр вывода `flutter pub get`) подтверждает, что `cloud_firestore 6.10.0` (или новее в рамках `^6.10.0`) присутствует в дереве зависимостей.
 
-### Анализ текущего состояния
+- [ ] 2. Переписать `OrderRequestWidget` в `contacts_widget.dart`: форма по скриншоту, валидация, запись в Firestore, экран успеха, SnackBar при ошибке.
+      `ContactsWidget` и `_HoverContactCard` в этом же файле НЕ менять. Заменяется только класс `OrderRequestWidget` и его state `_OrderRequestWidgetState` (сейчас там симуляция через `Future.delayed` без Firestore).
+      Files: `c:/Users/PREDATOR/Downloads/nexora2-main/nexora2-main/lib/presentation/widgets/contacts_widget.dart`
 
-- `home_page.dart` — класс `_HomeHero` содержит `Column` с текстом и кнопкой, но **нет никакого изображения или иллюстрации телефона**.
-- В `assets/images/` нет файла с именем iphone, phone, или аналогичного. Список файлов:  
-  `csslogo.png, dart.png, figmalogo.png, firebaselogo.png, githublogo.png, html5logo.png, image.png, It_project1.png, javascript.png, kotlinlogo.png, mobilelogo.jpeg, mobilelogo.png, postgresqllogo.png, pythonphoto.png, reactjs.jpeg, reactjs.png, restiplogo.png, swiftlogo.png, unitylogo.png`  
-  → изображения айфона **нет в assets**.
-- На странице услуг `mobile_development_page.dart` уже есть класс `_PhoneIllustration` — готовый Flutter-виджет, который рисует макет смартфона (чёрный корпус, скруглённые углы, динамик, кнопку START, надпись NEXORA). Это именно та иллюстрация, которую нужно добавить в hero главной страницы.
+      Что должно быть реализовано (без кода в плане — описание для реализации):
 
-### Что делать
+      - Импорты: добавить `import 'package:cloud_firestore/cloud_firestore.dart';` (поверх существующих `package:flutter/material.dart` и `package:url_launcher/url_launcher.dart`).
 
-**1.1. Исправить синтаксическую ошибку в `site_video_background.dart`**
+      - Контроллеры и состояние в `_OrderRequestWidgetState`: `GlobalKey<FormState> _formKey`; `TextEditingController` для телефона, имени, фамилии, названия компании, комментария (по одному на поле); `String? _selectedService` для дропдауна; `bool _isCompany` для чекбокса; `bool _submitting` для индикатора загрузки; `bool _submitted` для переключения на экран успеха. Все `TextEditingController`.dispose() в `dispose()`. Цвет `purple = Color(0xFF4412A7)` оставить как есть.
 
-Файл: `lib/presentation/widgets/site_video_background.dart`
+      - Внешний контейнер оставить прежним: `Dialog` с прозрачным фоном, `insetPadding` (25/30), внутренний `Container` width 520, padding 35, белый фон, border `0xFFE8E8E8`, shadow — как у существующего `OrderRequestWidget`/`ContactsWidget`. Внутри: если `_submitted` — экран успеха, иначе форма.
 
-Текущий некорректный код (строка ~58 в методе `build`):
-```dart
-        else
-          const ColoredBox(color: Colors.white),
-            ?widget.child,   // ← невалидный Dart
-```
+      - Шапка формы (как на скриншоте): иконка письма `Icons.mail_outline` в сиреневом квадрате `0xFFF1EBFF` (НЕ `assignment_outlined`, как сейчас); заголовок «Оставить заявку» (fontSize 24-26, fontWeight w600); подзаголовок «Выберите услугу и укажите контактные данные» (fontSize 14, black54); кнопка-крестик закрытия справа (как в `ContactsWidget._buildHeader`).
 
-Заменить на:
-```dart
-        else
-          const ColoredBox(color: Colors.white),
-        if (widget.child != null) widget.child!,
-```
+      - Поля формы (порядок строго по скриншоту, сверху вниз):
+        1. Dropdown «Нужная услуга» — `DropdownButtonFormField<String>` внутри `Form`, со списком значений `['Web и Mobile разработка', 'Разработка игр', 'Машинное обучение']`, значение `_selectedService`, подсказка/hint «Выберите услугу» когда ничего не выбрано. Стиль `InputDecoration` такой же, как у остальных полей (border `0xFFE5E5E5`, focusedBorder сиреневый, радиус 6). Валидатор: если `_selectedService == null` — вернуть «Выберите услугу».
+        2. Поле «Номер телефона» — `TextFormField`, controller телефона, icon `Icons.phone_outlined`, keyboardType phone. Валидатор: пусто → «Введите номер телефона».
+        3. Поле «Имя *» — `TextFormField`, controller имени, icon `Icons.person_outline`. Валидатор: пусто → «Введите имя».
+        4. Поле «Фамилия *» — `TextFormField`, controller фамилии, icon `Icons.person_outline`. Валидатор: пусто → «Введите фамилию».
+        5. Чекбокс «Представляю компанию» — `CheckboxListTile` или Row с `Checkbox` + Text, привязан к `_isCompany`. При включении показывать поле ниже, при выключении — скрывать и очищать controller названия компании.
+        6. Поле «Название компании» — `TextFormField`, controller названия компании, виден только когда `_isCompany == true`. Валидатор (только когда чекбокс включён): пусто → «Введите название компании».
+        7. Поле «Комментарий» — `TextFormField`, controller комментария, maxLines 4-5, icon `Icons.notes_outlined`. Необязательное (валидатор отсутствует или допускает пусто).
+        Метки «Имя *» и «Фамилия *» — со звёздочкой (как на скриншоте); остальные метки без звёздочки, но валидация services/phone/firstName/lastName/companyName(условное) обязательна.
 
-Это исправляет синтаксическую ошибку — проект перестанет падать при сборке.
+      - Кнопка «Отправить заявку» — `SizedBox` width infinity, height 52, `ElevatedButton`, фон `purple`, белый текст; внутри Row с текстом «Отправить заявку» и иконкой стрелки `Icons.arrow_forward` (или `Icons.send`). Когда `_submitting` — кнопка disabled и показывает белый `CircularProgressIndicator` (strokeWidth 2.5) вместо текста. onPressed вызывает `_submit`.
 
----
+      - Метод `_submit` (асинхронный):
+        1. `if (!_formKey.currentState!.validate()) return;` — если форма невалидна, не отправлять.
+        2. `setState(() => _submitting = true)`.
+        3. Сформировать map документа со СТРОГО 10 полями (ровно те, что в `firestore.rules`, никаких лишних ключей):
+           - `services`: `_selectedService` (строка — выбранная услуга),
+           - `clientType`: `_isCompany ? 'company' : 'individual'`,
+           - `clientName`: `'<firstName.trim()> <lastName.trim()>'` (имя + пробел + фамилия, оба обрезаны),
+           - `firstName`: `firstName.trim()`,
+           - `lastName`: `lastName.trim()`,
+           - `companyName`: `_isCompany ? companyName.trim() : ''` (для физлица — пустая строка, НЕ null),
+           - `phone`: `phone.trim()`,
+           - `message`: `message.trim()` (комментарий; если пусто — пустая строка, это допустимо правилами),
+           - `status`: `'new'` (всегда),
+           - `createdAt`: `FieldValue.serverTimestamp()`.
+        4. `await FirebaseFirestore.instance.collection('orders').add(<map>)` в `try/on FirebaseException catch (e)`.
+        5. При успехе: `if (!mounted) return;`, `setState(() { _submitting = false; _submitted = true; })` — показать экран успеха.
+        6. При ошибке: `if (!mounted) return;`, `setState(() => _submitting = false)` и `ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())))` — показать текст ошибки (можно упростить до `e.message ?? 'Ошибка отправки'`, но виден пользователю). Форму не сбрасывать, данные сохранить.
 
-**1.2. Добавить иллюстрацию телефона в hero главной страницы**
+      - Экран успеха `_buildSuccess` (показывается когда `_submitted`): сохранить дизайн текущего экрана успеха — сиреневый круг с `Icons.check_circle_outline`, заголовок «Заявка отправлена!», подзаголовок «Мы получили вашу заявку и свяжемся с вами в ближайшее время.», кнопка «Закрыть» (фиолетовая) вызывает `Navigator.pop(context)`.
 
-Файл: `lib/presentation/pages/home_page.dart`
+      - Сигнатуру `const OrderRequestWidget({super.key})` оставить без изменений, чтобы 3 вызова (`game_development_page.dart`, `machine_learning.dart`, `mobile_development_page.dart`) продолжали компилироваться через `const`.
 
-Класс `_HomeHero`, метод `build`. Текущая логика:
-```dart
-return Container(
-  ...
-  child: ConstrainedBox(
-    constraints: const BoxConstraints(maxWidth: 760),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Цифровые решения...',  ...),
-        SizedBox(height: 28),
-        Text('Разработка сайтов...', ...),
-        SizedBox(height: 36),
-        ElevatedButton(...),
-      ],
-    ),
-  ),
-);
-```
+      Verify:
+      - `flutter analyze` в корне проекта — 0 errors/warnings, относящихся к `contacts_widget.dart` (новых проблем не должно появиться).
+      - `flutter build web --release` — сборка завершается успешно и создаёт `build/web/` (это совпадает с `firebase.json` → `hosting.public = "build/web"`).
+      - Ручная проверка соответствия `firestore.rules`: состав полей map в `_submit` ровно = `[services, clientType, clientName, firstName, lastName, companyName, phone, message, status, createdAt]`, `status` всегда `'new'`, `createdAt` = `FieldValue.serverTimestamp()`, `companyName` пустая строка (не null) для физлица. Проверить визуально по коду.
 
-**Изменение:** Заменить `ConstrainedBox` с `Column` на адаптивный `Row` / `Column` (как в `_HeroSection` страницы мобильной разработки). На широком экране (>850px) — Row с текстом слева и телефоном справа; на узком — Column с текстом сверху и телефоном снизу.
-
-Новая структура `_HomeHero.build`:
-```dart
-@override
-Widget build(BuildContext context) {
-  final compact = MediaQuery.sizeOf(context).width < 850;
-  return Container(
-    width: double.infinity,
-    constraints: BoxConstraints(
-      minHeight: MediaQuery.sizeOf(context).height - 76,
-    ),
-    padding: EdgeInsets.symmetric(
-      horizontal: compact ? 24 : 70,
-      vertical: compact ? 56 : 80,
-    ),
-    alignment: Alignment.centerLeft,
-    child: compact
-        ? Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _heroText(compact),
-              const SizedBox(height: 48),
-              const _PhoneIllustration(),
-            ],
-          )
-        : Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                child: _heroText(compact),
-              ),
-              const SizedBox(width: 50),
-              const Expanded(child: _PhoneIllustration()),
-            ],
-          ),
-  );
-}
-```
-
-Вынести текст+кнопку в приватный метод `_heroText(bool compact)`:
-```dart
-Widget _heroText(bool compact) {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      Text(
-        'Цифровые решения\nдля вашего бизнеса',
-        style: TextStyle(
-          fontSize: compact ? 38 : 54,
-          fontWeight: FontWeight.w500,
-          height: 1.12,
-          color: Colors.white,
-        ),
-      ),
-      const SizedBox(height: 28),
-      const Text(
-        'Разработка сайтов\n'
-        'Разработка приложений\n'
-        'Разработка игр',
-        style: TextStyle(
-          fontSize: 17,
-          height: 1.8,
-          color: Colors.white70,
-        ),
-      ),
-      const SizedBox(height: 36),
-      ElevatedButton(
-        onPressed: onContact,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF4412A7),
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(5),
-          ),
-        ),
-        child: const Text('Заявка на услуги'),
-      ),
-    ],
-  );
-}
-```
-
-**Добавить класс `_PhoneIllustration`** в конец файла `home_page.dart` (скопировать точно из `mobile_development_page.dart`):
-```dart
-class _PhoneIllustration extends StatelessWidget {
-  const _PhoneIllustration();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Container(
-        width: 260,
-        height: 500,
-        decoration: BoxDecoration(
-          color: Colors.black,
-          borderRadius: BorderRadius.circular(38),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.15),
-              blurRadius: 35,
-              offset: const Offset(0, 20),
-            ),
-          ],
-        ),
-        padding: const EdgeInsets.all(10),
-        child: Container(
-          decoration: BoxDecoration(
-            color: const Color(0xFFF7F7F7),
-            borderRadius: BorderRadius.circular(30),
-          ),
-          child: Column(
-            children: [
-              const SizedBox(height: 12),
-              Container(
-                width: 75,
-                height: 22,
-                decoration: BoxDecoration(
-                  color: Colors.black,
-                  borderRadius: BorderRadius.circular(15),
-                ),
-              ),
-              const SizedBox(height: 50),
-              const Text(
-                'NEXORA',
-                style: TextStyle(
-                  fontSize: 25,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF4412A7),
-                ),
-              ),
-              const SizedBox(height: 15),
-              const Text(
-                'Mobile App',
-                style: TextStyle(fontSize: 18, color: Colors.black54),
-              ),
-              const Spacer(),
-              Container(
-                margin: const EdgeInsets.all(25),
-                height: 55,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF4412A7),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Center(
-                  child: Text(
-                    'START',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 15),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-```
-
-**Verify:** `flutter build web --no-pub` — должен завершиться без ошибок.
+- [ ] 3. Финальная проверка и локальный коммит (без пуша).
+      Убедиться, что `flutter analyze` чист, `flutter build web --release` собирается. `ContactsWidget` остался нетронутым (ссылки те же). Git remote НЕ менять, НЕ пушить: `git remote -v` должен показывать прежний `origin https://github.com/kuakpai-ship-it/Nexora.git` без изменений. Если нужен коммит — коммитить локально (`git add` конкретных файлов `pubspec.yaml` + `lib/presentation/widgets/contacts_widget.dart` + `pubspec.lock`, `git commit`), пуш (`git push`) НЕ выполнять и конфигурацию remote не трогать.
+      Files: (без правок кода на этом шаге)
+      Verify: `flutter analyze` — без ошибок; `flutter build web --release` — успех; `git remote -v` — remote прежний и не было `git push`.
 
 ---
 
-## Задача 2: Белые тексты на публичных страницах
-
-### Принцип
-
-- Страницы используют `Scaffold(backgroundColor: Colors.transparent)`, под которым видео-фон (тёмное видео).
-- Тёмные тексты (`Colors.black54`, `Colors.black45`, без явного цвета, `TextStyle()` без `color`) невидимы на тёмном фоне.
-- **Исключения (не трогать):** `admin_login_page.dart`, `contacts_widget.dart`, `web_development_page.dart` (у него `Scaffold(backgroundColor: Colors.white)` — белый фон, там чёрный текст правильный).
-
----
-
-### 2.1. `home_page.dart` — `_HomeContactSection`
-
-Файл: `lib/presentation/pages/home_page.dart`
-
-Класс `_HomeContactSection`:
-
-| Виджет | Текущий цвет | Что менять |
-|---|---|---|
-| `Text('Готовы создать\nчто-то новое?')` | цвет **не задан** (наследует белый из темы? — нет, тема не настроена, будет чёрным) | добавить `color: Colors.white` |
-| `Text('Расскажите нам о вашей идее')` | `Colors.black54` | заменить на `Colors.white70` |
-
-Текущий код:
-```dart
-Text(
-  'Готовы создать\nчто-то новое?',
-  textAlign: TextAlign.center,
-  style: TextStyle(
-    fontSize: compact ? 38 : 56,
-    fontWeight: FontWeight.w500,
-    height: 1.12,
-    // ← нет color
-  ),
-),
-...
-const Text(
-  'Расскажите нам о вашей идее',
-  style: TextStyle(fontSize: 17, color: Colors.black54),  // ← чёрный
-),
-```
-
-Изменения:
-- В первом `TextStyle` добавить `color: Colors.white`
-- Во втором `TextStyle` заменить `color: Colors.black54` на `color: Colors.white70`
-
-> Примечание: цвет `ElevatedButton` менять не нужно — кнопка на фиолетовом фоне с `backgroundColor: Color(0xFF4412A7)` сольётся — это часть Задачи 3.
-
----
-
-### 2.2. `about_page.dart`
-
-Файл: `lib/presentation/pages/about_page.dart`
-
-| Метод / Виджет | Текущий цвет | Что менять |
-|---|---|---|
-| `_buildAboutText` → десктопная ветка → inline `Text(...)` (описание компании) | `Colors.black54` | → `Colors.white70` |
-| `_buildAboutText` → `_description()` → `Text(...)` | `Colors.black54` | → `Colors.white70` |
-| `_sectionTitle()` → `Text('О компании')` | цвет **не задан** | добавить `color: Colors.white` |
-| `_buildTeam()` → `Text('Наша команда')` | цвет **не задан** | добавить `color: Colors.white` |
-| `_buildFooter()` → `Text('NEXORA')` | цвет **не задан** | добавить `color: Colors.white` |
-| `_buildFooter()` → `Text('© 2026 Nexora')` | `Colors.black45` | → `Colors.white38` |
-
-Дополнительно в `_buildAboutText` — десктопная ветка (Row) содержит `const Expanded(flex: 2, child: Text(..., style: TextStyle(... color: Colors.black54)))` — заменить на `Colors.white70`.
-
----
-
-### 2.3. `services_section.dart`
-
-Файл: `lib/presentation/widgets/services_section.dart`
-
-Этот виджет отображается на главной странице поверх видео-фона (прозрачный контейнер).
-
-| Виджет | Текущий цвет | Что менять |
-|---|---|---|
-| `_ProcessColumn` → `Text('Процесс')` | цвет **не задан** | добавить `color: Colors.white` |
-| `_ProcessColumn` → описание `Text('Мы обеспечиваем...')` | `Colors.black54` | → `Colors.white70` |
-| `_ProcessColumn` → `_ProcessItem` → `Text(title)` (каждый) | цвет **не задан** | добавить `color: Colors.white` |
-| `_ServicesColumn` → `Text('Услуги')` | цвет **не задан** | добавить `color: Colors.white` |
-| `_ServicesColumn` → описание `Text('Создаём цифровые...')` | `Colors.black54` | → `Colors.white70` |
-| `_ServiceItem` → `Text(widget.title)` | цвет **не задан** (наследует тёмный) | добавить `color: isHover ? Colors.white : Colors.white` (всегда белый, т.к. фон везде тёмный/фиолетовый) |
-
-В `_ProcessItem` в `TextStyle` внутри `Row`:
-```dart
-Text(title, style: const TextStyle(fontSize: 19)),  // ← нет color
-```
-Заменить на:
-```dart
-Text(title, style: const TextStyle(fontSize: 19, color: Colors.white)),
-```
-
-В `_ServiceItem` в `AnimatedContainer.child` → `Row` → `Expanded` → `Text`:
-```dart
-Text(
-  widget.title,
-  style: TextStyle(
-    fontSize: 19,
-    fontWeight: isHover ? FontWeight.w500 : FontWeight.w400,
-    // ← нет color
-  ),
-),
-```
-Добавить `color: Colors.white`.
-
-Разделители (border bottom) `Color(0xFFE0E0E0)` — заменить на `Color(0x33FFFFFF)` (светлый с прозрачностью на тёмном фоне).
-
----
-
-### 2.4. `technologies_section.dart`
-
-Файл: `lib/presentation/widgets/technologies_section.dart`
-
-| Виджет | Текущий цвет | Что менять |
-|---|---|---|
-| `Text('Языки и\nтехнологии')` | цвет **не задан** | добавить `color: Colors.white` |
-| `Text('Используем современные...')` | `Colors.black54` | → `Colors.white70` |
-
-Карточки `TechnologyItem` уже имеют `Colors.white` для текстов (они поверх изображений с градиентом) — не менять.
-
----
-
-### 2.5. `mobile_development_page.dart`
-
-Файл: `lib/presentation/mobile_screen_folders/screens/mobile_development_page.dart`
-
-У этой страницы `Scaffold(backgroundColor: Colors.transparent)` → видео-фон.
-
-**Hero секция (`_HeroSection`):**
-
-| Виджет | Текущий цвет | Что менять |
-|---|---|---|
-| `Text('WEB + MOBILE\nDEVELOPMENT')` (мобиль) | цвет **не задан** | добавить `color: Colors.white` |
-| `Text('Создаём сайты...')` (мобиль) | `Colors.black54` | → `Colors.white70` |
-| `Text('MOBILE\nDEVELOPMENT')` (десктоп) | цвет **не задан** | добавить `color: Colors.white` |
-| `Text('Создаём сайты...')` (десктоп, `SizedBox(width:600)`) | `Colors.black54` | → `Colors.white70` |
-
-**Services секция (`_ServicesSection`):**
-
-| Виджет | Текущий цвет | Что менять |
-|---|---|---|
-| `Text('Создаём удобные приложения...')` | `Colors.black54` | → `Colors.white70` |
-| `_HoverServiceItem` → `Text(widget.title)` | цвет **не задан** | добавить `color: Colors.white` |
-| Разделители `Color(0xFFE0E0E0)` в `_HoverServiceItem` | светло-серый | → `Color(0x33FFFFFF)` |
-
-**Technologies секция (`_TechnologiesSection`):**
-
-| Виджет | Текущий цвет | Что менять |
-|---|---|---|
-| `Text('Технологии')` | цвет **не задан** | добавить `color: Colors.white` |
-| `Text(technology)` (в текстовых плитках без картинки) | цвет **не задан** | добавить `color: Colors.white` |
-
-**Process секция (`_ProcessSection`):**
-
-| Виджет | Текущий цвет | Что менять |
-|---|---|---|
-| `Text('Этапы разработки')` | цвет **не задан** | добавить `color: Colors.white` |
-| `Text(steps[index])` (каждый шаг) | цвет **не задан** | добавить `color: Colors.white` |
-| Разделители `Color(0xFFE0E0E0)` | светло-серый | → `Color(0x33FFFFFF)` |
-
-**Projects секция (`_ProjectsSection`):**
-
-| Виджет | Текущий цвет | Что менять |
-|---|---|---|
-| `Text('Наши проекты')` | цвет **не задан** | добавить `color: Colors.white` |
-
-Карточки `_ProjectCard` при `isHover=false` используют `color: Colors.black` и `color: Colors.black54` **на белом фоне карточки** — это правильно, не менять (карточки белые).
-
----
-
-### 2.6. `game_development_page.dart`
-
-Файл: `lib/presentation/mobile_screen_folders/screens/game_development_page.dart`
-
-**Hero секция (`_GameHero`):**
-
-| Виджет | Текущий цвет | Что менять |
-|---|---|---|
-| `Text('GAME\nDEVELOPMENT')` (мобиль) | цвет **не задан** | добавить `color: Colors.white` |
-| `Text('Создаём игры...')` (мобиль) | `Colors.black54` | → `Colors.white70` |
-| `Text('GAME\nDEVELOPMENT')` (десктоп) | цвет **не задан** | добавить `color: Colors.white` |
-| `Text('Создаём игры...')` (десктоп, `SizedBox(width:600)`) | `Colors.black54` | → `Colors.white70` |
-
-**Game Types (`_GameTypes`):**
-
-| Виджет | Текущий цвет | Что менять |
-|---|---|---|
-| `Text('Создаём игры')` | цвет **не задан** | добавить `color: Colors.white` |
-| `Text('От идеи и концепции...')` | `Colors.black54` | → `Colors.white70` |
-
-Карточки `_GameTypeCard` при `isHover=false` используют `color: Colors.white` для фона карточки — тексты в них не менять (карточки белые).
-
-**Technologies (`_GameTechnologies`):**
-
-| Виджет | Текущий цвет | Что менять |
-|---|---|---|
-| `Text('Технологии')` | цвет **не задан** | добавить `color: Colors.white` |
-| `Text(name)` внутри технологических карточек | цвет **не задан** | добавить `color: Colors.white` |
-
-Карточки технологий в GameDevelopmentPage имеют `color: Colors.white` (белый фон) → там `Text(name)` с дефолтным чёрным правильно смотрится. **Не менять.**
-
-**Projects (`_GameProjects`):**
-
-| Виджет | Текущий цвет | Что менять |
-|---|---|---|
-| `Text('Игровые проекты')` | цвет **не задан** | добавить `color: Colors.white` |
-
-Карточки `_GameProjectCard` — белые при `isHover=false`, чёрный текст там правильный, не менять.
-
-**Team (`_GameTeam`):**
-
-| Виджет | Текущий цвет | Что менять |
-|---|---|---|
-| `Text('Команда проекта')` | цвет **не задан** | добавить `color: Colors.white` |
-| `Text(team[index])` (каждый) | цвет **не задан** | добавить `color: Colors.white` |
-| Разделители `Color(0xFFE0E0E0)` | светло-серый | → `Color(0x33FFFFFF)` |
-
----
-
-### 2.7. `machine_learning.dart`
-
-Файл: `lib/presentation/mobile_screen_folders/screens/machine_learning.dart`
-
-**Hero (`_buildDesktopHero` и `_buildMobileHero`):**
-
-| Виджет | Текущий цвет | Что менять |
-|---|---|---|
-| `Text('Машинное\nобучение')` (desktop) | цвет **не задан** | добавить `color: Colors.white` |
-| `Text('Умные решения...')` (desktop) | `Colors.black54` | → `Colors.white70` |
-| `Text('Машинное\nобучение')` (mobile) | цвет **не задан** | добавить `color: Colors.white` |
-| `Text('Умные решения...')` (mobile) | `Colors.black54` | → `Colors.white70` |
-
-**Services (`_buildServices`):**
-
-| Виджет | Текущий цвет | Что менять |
-|---|---|---|
-| `Text('Что мы делаем')` (оба layout) | цвет **не задан** | добавить `color: Colors.white` |
-
-Карточки `_serviceCard` имеют `color: Colors.white` (белый фон) — тексты в них не менять.
-
-**Process (`_buildProcess`):**
-
-| Виджет | Текущий цвет | Что менять |
-|---|---|---|
-| `Text('Как мы работаем')` | цвет **не задан** | добавить `color: Colors.white` |
-
-Карточки `_processCard` имеют `color: Colors.transparent` → текст виден поверх видео только если он белый.
-
-| Виджет | Текущий цвет | Что менять |
-|---|---|---|
-| `_processCard` → `Text(title)` | цвет **не задан** | добавить `color: Colors.white` |
-| `_processCard` → `Text(text)` | `Colors.black54` | → `Colors.white70` |
-
-**Contact (`_buildContact`):**
-
-| Виджет | Текущий цвет | Что менять |
-|---|---|---|
-| `Text('Есть идея\nдля AI-проекта?')` | цвет **не задан** | добавить `color: Colors.white` |
-| `Text('Расскажите нам...')` | `Colors.black54` | → `Colors.white70` |
-
----
-
-## Задача 3: CTA-секция "Готовы создать что-то новое?" — переделать как на страницах услуг
-
-### Анализ текущего состояния
-
-Текущий `_HomeContactSection` в `home_page.dart`:
-- Фон: `color: const Color(0xFF4412A7)` ✓ (фиолетовый — уже правильный)
-- Заголовок `'Готовы создать\nчто-то новое?'`: цвет не задан — **нужно добавить `color: Colors.white`**
-- Подзаголовок `'Расскажите нам о вашей идее'`: `color: Colors.black54` — **нужно заменить на `Colors.white70`**
-- Кнопка: `backgroundColor: Color(0xFF4412A7)` — кнопка сливается с фоном, **нужно заменить**
-
-### Эталон со страниц услуг
-
-**`mobile_development_page.dart`** → `_ContactSection`:
-```
-Container(color: Color(0xFF4412A7), ...)
-  Column(crossAxisAlignment: start)
-    Text('05', color: Colors.white70)
-    Text('Есть идея\nдля приложения?', color: Colors.white)
-    Text('Расскажите нам...', color: Colors.white70)
-    ElevatedButton(
-      backgroundColor: Colors.white,
-      foregroundColor: Color(0xFF4412A7),
-      child: Text('Связаться с нами')
-    )
-```
-
-**`game_development_page.dart`** → `_GameContact` — идентичный паттерн.
-
-### Точные изменения в `_HomeContactSection`
-
-Файл: `lib/presentation/pages/home_page.dart`, класс `_HomeContactSection`
-
-**До:**
-```dart
-child: Column(
-  children: [
-    Text(
-      'Готовы создать\nчто-то новое?',
-      textAlign: TextAlign.center,
-      style: TextStyle(
-        fontSize: compact ? 38 : 56,
-        fontWeight: FontWeight.w500,
-        height: 1.12,
-        // ← нет color
-      ),
-    ),
-    const SizedBox(height: 24),
-    const Text(
-      'Расскажите нам о вашей идее',
-      style: TextStyle(fontSize: 17, color: Colors.black54),  // ← черный
-    ),
-    const SizedBox(height: 28),
-    ElevatedButton(
-      onPressed: onContact,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFF4412A7),  // ← сливается с фоном
-        foregroundColor: Colors.white,
-        ...
-      ),
-      child: const Text('Связаться с нами'),
-    ),
-  ],
-),
-```
-
-**После:**
-```dart
-child: Column(
-  crossAxisAlignment: CrossAxisAlignment.start,  // выровнять влево как на услугах
-  children: [
-    Text(
-      'Готовы создать\nчто-то новое?',
-      style: TextStyle(
-        fontSize: compact ? 38 : 56,
-        fontWeight: FontWeight.w500,
-        height: 1.12,
-        color: Colors.white,                      // ← добавить
-      ),
-    ),
-    const SizedBox(height: 24),
-    const Text(
-      'Расскажите нам о вашей идее',
-      style: TextStyle(
-        fontSize: 17,
-        color: Colors.white70,                    // ← заменить
-      ),
-    ),
-    const SizedBox(height: 28),
-    ElevatedButton(
-      onPressed: onContact,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.white,            // ← белая кнопка
-        foregroundColor: const Color(0xFF4412A7), // ← фиолетовый текст
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 17),
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(5),
-        ),
-      ),
-      child: const Text('Связаться с нами'),
-    ),
-  ],
-),
-```
-
-Убрать `textAlign: TextAlign.center` у заголовка (выравнивание по левому краю как на услугах), и добавить `crossAxisAlignment: CrossAxisAlignment.start` в `Column`.
-
----
-
-## Порядок выполнения (зависимости)
-
-1. **Сначала** исправить `site_video_background.dart` (п.1.1) — это критическая синтаксическая ошибка, без которой проект не собирается.
-2. **Затем** добавить `_PhoneIllustration` в `home_page.dart` (п.1.2) — нет зависимостей от других задач.
-3. **Затем** исправить тексты во всех публичных страницах (Задача 2) — файлы независимы друг от друга, можно делать в любом порядке.
-4. **Затем** переделать CTA-секцию (Задача 3) — это изменения в `home_page.dart`, который уже будет модифицирован в п.1.2.
-
-**Verify все задачи:** `flutter build web --no-pub` — сборка завершается без ошибок и предупреждений.
+Замечание/допущение: в спецификации звёздочкой (*) помечены только «Имя» и «Фамилия», но services (дропдаун) и «Номер телефона» сделаны обязательными для валидации, потому что без выбранной услуги и контакта заявка бесполезна, а `firestore.rules` всё равно требует эти поля строками. Метки оставлены как на скриншоте (звёздочки только у имени и фамилии) — это расхождение между UI-подписью и логикой валидации; принято осознанно. Если пользователь по картинкам попросит убрать обязательность телефона/services — скорректировать валидаторы, оставив поля опциональными (правый путь: services по умолчанию первый вариант, phone/message допускают пустую строку, что тоже проходит `firestore.rules`).

@@ -27,58 +27,51 @@ class MobileDevelopmentPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.transparent,
 
-      body: KeyboardScrollable(
-        builder: (context, controller) => SingleChildScrollView(
-          controller: controller,
-          child: Column(
-            children: [
-              const ServicePageHeader(),
-              // ================= HERO =================
+      body: Column(
+        children: [
+          const ServicePageHeader(),
+          Expanded(
+            child: KeyboardScrollable(
+              builder: (context, controller) => SingleChildScrollView(
+                controller: controller,
+                child: Column(
+                  children: [
+                    // ================= HERO =================
 
-              ScrollReveal(
-                child: _HeroSection(
-                  onContact: () => showDialog(
-                    context: context,
-                    barrierColor: Colors.black54,
-                    builder: (_) => const OrderRequestWidget(),
-                  ),
+                    ScrollReveal(
+                      child: _HeroSection(
+                        onContact: () => showDialog(
+                          context: context,
+                          barrierColor: Colors.black54,
+                          builder: (_) => const OrderRequestWidget(),
+                        ),
+                      ),
+                    ),
+
+                    // ================= SERVICES =================
+                    ScrollReveal(child: _ServicesSection()),
+                    ScrollReveal(child: _TechnologiesSection()),
+                    ScrollReveal(child: _ProcessSection()),
+                    ScrollReveal(
+                      child: _ProjectsSection(
+                        onContact: () { _showContacts(context); },
+                      ),
+                    ),
+                    ScrollReveal(
+                      child: _ContactSection(
+                        onContact: () { _showContacts(context); },
+                      ),
+                    ),
+                  ],
                 ),
               ),
-
-              // ================= SERVICES =================
-              ScrollReveal(child: _ServicesSection()),
-
-              // ================= TECHNOLOGIES =================
-              ScrollReveal(child: _TechnologiesSection()),
-
-              // ================= PROCESS =================
-              ScrollReveal(child: _ProcessSection()),
-
-              // ================= PROJECTS =================
-              ScrollReveal(
-                child: _ProjectsSection(
-                  onContact: () {
-                    _showContacts(context);
-                  },
-                ),
-              ),
-
-              // ================= CONTACT =================
-              ScrollReveal(
-                child: _ContactSection(
-                  onContact: () {
-                    _showContacts(context);
-                  },
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
 }
-
 // ======================================================
 // HERO
 // ======================================================

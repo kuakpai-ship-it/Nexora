@@ -32,20 +32,26 @@ class AboutPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: KeyboardScrollable(
-        builder: (context, controller) => SingleChildScrollView(
-          controller: controller,
-          child: Column(
-            children: [
-              _buildHeader(context),
-              ScrollReveal(child: _buildHero(context)),
-              ScrollReveal(child: _buildAboutText(context)),
-              ScrollReveal(child: _buildTeam(context)),
-              ScrollReveal(child: _buildContactSection(context)),
-              ScrollReveal(child: _buildFooter(context)),
-            ],
+      body: Column(
+        children: [
+          _buildHeader(context),
+          Expanded(
+            child: KeyboardScrollable(
+              builder: (context, controller) => SingleChildScrollView(
+                controller: controller,
+                child: Column(
+                  children: [
+                    ScrollReveal(child: _buildHero(context)),
+                    ScrollReveal(child: _buildAboutText(context)),
+                    ScrollReveal(child: _buildTeam(context)),
+                    ScrollReveal(child: _buildContactSection(context)),
+                    ScrollReveal(child: _buildFooter(context)),
+                  ],
+                ),
+              ),
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

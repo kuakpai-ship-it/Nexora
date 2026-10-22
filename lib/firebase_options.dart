@@ -31,12 +31,13 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyDo5SbuKE6-Y_VAZXqQMdqUPUIVf8-WY64',
+    apiKey: 'AIzaSyBH7zORnU1b7Sf6IBjQTDs2mF29-8uXNZk',
     appId: '1:731248589799:web:bcaa463be9a874c66a9b42',
     messagingSenderId: '731248589799',
     projectId: 'nexora-3261b-88f1d',
     authDomain: 'nexora-3261b-88f1d.firebaseapp.com',
-    storageBucket: 'nexora-3261b-88f1d.appspot.com',
+    storageBucket: 'nexora-3261b-88f1d.firebasestorage.app',
+    databaseURL: 'https://nexora-3261b-88f1d-default-rtdb.europe-west1.firebasedatabase.app',
   );
 
   static const FirebaseOptions android = FirebaseOptions(

@@ -1,15 +1,12 @@
+// ignore_for_file: avoid_web_libraries_in_flutter
 import 'package:flutter/material.dart';
-import 'package:nexora/presentation/mobile_screen_folders/screens/admin_login_page.dart';
-import 'package:nexora/presentation/mobile_screen_folders/screens/machine_learning.dart';
-import 'package:video_player/video_player.dart';
-import 'package:nexora/data/consts/app_colors.dart';
-import 'package:nexora/presentation/mobile_screen_folders/screens/game_development_page.dart';
-import 'package:nexora/presentation/mobile_screen_folders/screens/mobile_development_page.dart';
-import 'package:nexora/presentation/pages/about_page.dart';
-import 'package:nexora/presentation/widgets/animated_menu.dart';
+import 'package:flutter/services.dart';
 import 'package:nexora/presentation/widgets/contacts_widget.dart';
+import 'package:nexora/presentation/widgets/scroll_reveal.dart';
+import 'package:nexora/presentation/widgets/service_page_header.dart';
 import 'package:nexora/presentation/widgets/services_section.dart';
 import 'package:nexora/presentation/widgets/technologies_section.dart';
+import 'package:video_player/video_player.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -19,504 +16,334 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  late VideoPlayerController videoController;
+  final ScrollController _scrollController = ScrollController();
+  final FocusNode _focusNode = FocusNode();
 
-  final Color purple = const Color(0xFF4412A7);
-
-  @override
-  void initState() {
-    super.initState();
-
-    videoController = VideoPlayerController.networkUrl(
-      Uri.parse('https://res.cloudinary.com/yqbdknq8/video/upload/v1792509210/logo_light.webm'),
+  void _showContacts(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      barrierColor: Colors.white,
+      builder: (context) => const ContactsWidget(),
     );
-    videoController.setLooping(true);
-    videoController.setVolume(0);
+  }
 
-    videoController.initialize().then((_) {
-      if (mounted) {
-        videoController.play();
-        setState(() {});
-      }
-    });
+  void _handleKeyEvent(KeyEvent event) {
+    if (event is! KeyDownEvent && event is! KeyRepeatEvent) return;
+    final isRepeat = event is KeyRepeatEvent;
+    final step = isRepeat
+        ? MediaQuery.sizeOf(context).height * 0.05
+        : MediaQuery.sizeOf(context).height * 0.8;
+    final duration = isRepeat
+        ? const Duration(milliseconds: 80)
+        : const Duration(milliseconds: 400);
+    final curve = isRepeat ? Curves.linear : Curves.easeInOut;
+    if (event.logicalKey == LogicalKeyboardKey.arrowDown ||
+        event.logicalKey == LogicalKeyboardKey.pageDown) {
+      _scrollController.animateTo(
+        _scrollController.offset + step,
+        duration: duration,
+        curve: curve,
+      );
+    } else if (event.logicalKey == LogicalKeyboardKey.arrowUp ||
+        event.logicalKey == LogicalKeyboardKey.pageUp) {
+      _scrollController.animateTo(
+        _scrollController.offset - step,
+        duration: duration,
+        curve: curve,
+      );
+    }
   }
 
   @override
   void dispose() {
-    videoController.dispose();
+    _scrollController.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
-  void _showContactDialog() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return const ContactsWidget();
-      },
+  @override
+  Widget build(BuildContext context) {
+    return KeyboardListener(
+      focusNode: _focusNode,
+      autofocus: true,
+      onKeyEvent: _handleKeyEvent,
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Column(
+          children: [
+            const ServicePageHeader(),
+            Expanded(
+              child: SingleChildScrollView(
+                controller: _scrollController,
+                child: Column(
+                  children: [
+                    ScrollReveal(
+                      child: _HomeHero(
+                        onContact: () => showDialog(
+                          context: context,
+                          barrierColor: Colors.black54,
+                          builder: (_) => const OrderRequestWidget(),
+                        ),
+                      ),
+                    ),
+                    ServicesSection(
+                      onWebMobileTap: () =>
+                          Navigator.pushNamed(context, '/web-mobile'),
+                      onGamesTap: () => Navigator.pushNamed(context, '/games'),
+                      onMachineLearningTap: () =>
+                          Navigator.pushNamed(context, '/machine-learning'),
+                    ),
+                    const ScrollReveal(child: TechnologiesSection()),
+                    ScrollReveal(
+                      child: _HomeContactSection(
+                        onContact: () => _showContacts(context),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
-
-  void _showOrderRequestDialog() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return const OrderRequestWidget();
-      },
-    );
-  }
-
-  void _openMobilePage() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const MobileDevelopmentPage()),
-    );
-  }
-
-  void _openGamePage() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const GameDevelopmentPage()),
-    );
-  }
-
-  void _openAboutPage() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const AboutPage()),
-    );
-  }
-
-  void _openMachineLearningPage() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const MachineLearningPage()),
-    );
-  }
-
-  void _openAdminPage() {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => const AdminLoginPage(),
-    ),
-  );
 }
+
+class _HomeHero extends StatelessWidget {
+  const _HomeHero({required this.onContact});
+
+  final VoidCallback onContact;
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.white,
-      body: Column(
-        children: [
-          _buildHeader(),
-
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  _buildHero(),
-                  const ServicesSection(),
-                  const TechnologiesSection(),
-                  _buildAboutSection(),
-                  _buildContactSection(),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Container(
-      height: 75,
-      padding: const EdgeInsets.symmetric(horizontal: 35),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: Color(0xFFEAEAEA))),
-      ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          if (constraints.maxWidth < 850) {
-            return _buildMobileHeader();
-          }
-
-          return _buildDesktopHeader();
-        },
-      ),
-    );
-  }
-
-  Widget _buildDesktopHeader() {
-    return Row(
-      children: [
-        Text(
-          'Nexora',
-          style: TextStyle(
-            fontSize: 30,
-            fontWeight: FontWeight.bold,
-            color: purple,
-          ),
-        ),
-
-        const Spacer(),
-
-        AnimatedMenu(
-          title: 'Услуги',
-          items: const [
-            'Web / Mobile разработка',
-            'Разработка игр',
-            'Машинное обучение',
-          ],
-          onPressed: [_openMobilePage, _openGamePage, _openMachineLearningPage],
-        ),
-
-        const SizedBox(width: 40),
-
-        AnimatedMenu(
-          title: 'О нас',
-          items: const ['О нас'],
-          onPressed: [_openAboutPage, () {}],
-        ),
-
-        const SizedBox(width: 40),
-
-        GestureDetector(
-          onTap: _openAdminPage,
-          child: const Text('Админ', style: TextStyle(fontSize: 15)),
-        ),
-
-        const SizedBox(width: 25),
-
-        ElevatedButton(
-          onPressed: _showContactDialog,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: purple,
-            foregroundColor: Colors.white,
-            minimumSize: const Size(190, 45),
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(5),
-            ),
-          ),
-          child: const Text('Свяжитесь с нами', style: TextStyle(fontSize: 14)),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildMobileHeader() {
-    return Row(
-      children: [
-        Text(
-          'Nexora',
-          style: TextStyle(
-            fontSize: 26,
-            fontWeight: FontWeight.bold,
-            color: purple,
-          ),
-        ),
-
-        const Spacer(),
-
-        AnimatedMenu(
-          title: 'Услуги',
-          items: const ['Web / Mobile разработка', 'Разработка игр'],
-          onPressed: [_openMobilePage, _openGamePage],
-        ),
-
-        const SizedBox(width: 20),
-
-        AnimatedMenu(
-          title: 'О нас',
-          items: const ['О нас', 'Отзывы наших клиентов'],
-          onPressed: [_openAboutPage, () {}],
-        ),
-
-        const SizedBox(width: 20),
-
-        ElevatedButton(
-          onPressed: _showContactDialog,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: purple,
-            foregroundColor: Colors.white,
-            minimumSize: const Size(150, 42),
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(5),
-            ),
-          ),
-          child: const Text('Связаться', style: TextStyle(fontSize: 13)),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildHero() {
+    final compact = MediaQuery.sizeOf(context).width < 850;
     return Container(
       width: double.infinity,
-      constraints: const BoxConstraints(minHeight: 650),
-      padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 70),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          if (constraints.maxWidth < 900) {
-            return _buildMobileHero();
-          }
-
-          return _buildDesktopHero();
-        },
+      constraints: BoxConstraints(
+        minHeight: MediaQuery.sizeOf(context).height - 76,
       ),
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 24 : 70,
+        vertical: compact ? 56 : 80,
+      ),
+      alignment: Alignment.centerLeft,
+      child: compact
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _heroText(context, compact),
+                const SizedBox(height: 48),
+                const _PhoneIllustration(),
+              ],
+            )
+          : Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(child: _heroText(context, compact)),
+                const SizedBox(width: 50),
+                const Expanded(child: _PhoneIllustration()),
+              ],
+            ),
     );
   }
 
-  Widget _buildDesktopHero() {
-    return Row(
-      children: [
-        Expanded(
-          flex: 6,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text(
-                'Цифровые решения\nдля вашего бизнеса',
-                style: TextStyle(
-                  fontSize: 58,
-                  fontWeight: FontWeight.w500,
-                  height: 1.08,
-                ),
-              ),
-
-              const SizedBox(height: 30),
-
-              const Text(
-                'Разработка сайтов\n'
-                'Разработка приложений\n'
-                'Разработка игр',
-                style: TextStyle(
-                  fontSize: 18,
-                  height: 1.7,
-                  color: Colors.black54,
-                ),
-              ),
-
-              const SizedBox(height: 40),
-
-              ElevatedButton(
-                onPressed: _showOrderRequestDialog,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: purple,
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size(190, 55),
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(5),
-                  ),
-                ),
-                child: const Text('Заявка на услугу', style: TextStyle(fontSize: 16)),
-              ),
-            ],
-          ),
-        ),
-
-        const SizedBox(width: 50),
-
-        Expanded(flex: 5, child: _buildVideo()),
-      ],
-    );
-  }
-
-  Widget _buildMobileHero() {
+  Widget _heroText(BuildContext context, bool compact) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        const Text(
+        Text(
           'Цифровые решения\nдля вашего бизнеса',
           style: TextStyle(
-            fontSize: 42,
+            fontSize: compact ? 38 : 54,
             fontWeight: FontWeight.w500,
-            height: 1.1,
+            height: 1.12,
+            color: Colors.white,
           ),
         ),
-
-        const SizedBox(height: 25),
-
+        const SizedBox(height: 28),
         const Text(
           'Разработка сайтов\n'
           'Разработка приложений\n'
           'Разработка игр',
-          style: TextStyle(fontSize: 17, height: 1.7, color: Colors.black54),
+          style: TextStyle(
+            fontSize: 19,
+            height: 1.8,
+            color: const Color(0xFFE8E8E8),
+          ),
         ),
-
-        const SizedBox(height: 30),
-
+        const SizedBox(height: 36),
         ElevatedButton(
-          onPressed: _showOrderRequestDialog,
+          onPressed: onContact,
           style: ElevatedButton.styleFrom(
-            backgroundColor: purple,
+            backgroundColor: const Color(0xFF4412A7),
             foregroundColor: Colors.white,
-            minimumSize: const Size(180, 52),
-            elevation: 0,
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24,
+              vertical: 18,
+            ),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(5),
             ),
           ),
-          child: const Text('Заявка на услугу', style: TextStyle(fontSize: 16)),
+          child: const Text('Заявка на услуги'),
         ),
-
-        const SizedBox(height: 45),
-
-        _buildVideo(),
       ],
     );
   }
+}
 
-  Widget _buildVideo() {
-    return Container(
-      width: double.infinity,
-      height: 400,
-      decoration: BoxDecoration(
-        color: const Color(0xFFF7F7F7),
-        border: Border.all(color: const Color(0xFFE5E5E5)),
-      ),
-      child: videoController.value.isInitialized
-          ? ClipRect(
-              child: FittedBox(
-                fit: BoxFit.cover,
-                child: SizedBox(
-                  width: videoController.value.size.width,
-                  height: videoController.value.size.height,
-                  child: VideoPlayer(videoController),
-                ),
-              ),
-            )
-          : Center(child: CircularProgressIndicator(color: purple)),
-    );
+class _PhoneIllustration extends StatefulWidget {
+  const _PhoneIllustration();
+
+  @override
+  State<_PhoneIllustration> createState() => _PhoneIllustrationState();
+}
+
+class _PhoneIllustrationState extends State<_PhoneIllustration> {
+  VideoPlayerController? _controller;
+  bool _videoReady = false;
+
+  bool get _isMobile => MediaQuery.sizeOf(context).width < 850;
+
+  @override
+  void initState() {
+    super.initState();
+    // Видео загружаем только на десктопе
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_isMobile) {
+        _initVideo();
+      }
+    });
   }
 
-  Widget _buildAboutSection() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 100),
-      color: const Color(0xFFF7F7F7),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          if (constraints.maxWidth < 800) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _sectionNumber('03'),
-
-                const SizedBox(height: 20),
-
-                const Text(
-                  'О компании',
-                  style: TextStyle(fontSize: 44, fontWeight: FontWeight.w500),
-                ),
-
-                const SizedBox(height: 30),
-
-                _aboutText(),
-              ],
-            );
-          }
-
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(width: 100, child: _sectionNumber('03')),
-
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'О компании',
-                      style: TextStyle(
-                        fontSize: 52,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-
-                    const SizedBox(height: 35),
-
-                    _aboutText(),
-                  ],
-                ),
-              ),
-            ],
-          );
-        },
+  void _initVideo() {
+    _controller = VideoPlayerController.networkUrl(
+      Uri.parse(
+        'https://res.cloudinary.com/yqbdknq8/video/upload/v1792509210/logo_light.webm',
       ),
     );
+    _controller!.addListener(_onUpdate);
+    _controller!.initialize().then((_) {
+      if (mounted) {
+        _controller!.setVolume(0);
+        _controller!.play();
+      }
+    }).catchError((_) {});
   }
 
-  Widget _sectionNumber(String number) {
-    return Text(
-      number,
-      style: TextStyle(
-        fontSize: 18,
-        fontWeight: FontWeight.bold,
-        color: purple,
+  void _onUpdate() {
+    if (!mounted) return;
+    if (!_videoReady && (_controller?.value.isInitialized ?? false)) {
+      setState(() => _videoReady = true);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller?.removeListener(_onUpdate);
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final size = MediaQuery.sizeOf(context);
+    final isMobile = size.width < 850;
+    final videoWidth = isMobile
+        ? (size.width * 0.9).clamp(200.0, 400.0)
+        : (size.width * 0.52).clamp(380.0, 700.0);
+    final videoHeight = videoWidth * 0.82;
+
+    // На мобиле — GIF
+    if (isMobile) {
+      return Center(
+        child: Image.network(
+          'https://res.cloudinary.com/yqbdknq8/image/upload/v1792644876/logogif.gif',
+          width: videoWidth,
+          height: videoHeight,
+          fit: BoxFit.contain,
+        ),
+      );
+    }
+
+    // На десктопе — видео
+    return Center(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(32),
+        child: SizedBox(
+          width: videoWidth,
+          height: videoHeight,
+          child: _videoReady && _controller != null
+              ? FittedBox(
+                  fit: BoxFit.contain,
+                  child: SizedBox(
+                    width: _controller!.value.size.width,
+                    height: _controller!.value.size.height,
+                    child: VideoPlayer(_controller!),
+                  ),
+                )
+              : const ColoredBox(color: Color(0xFF0D0618)),
+        ),
       ),
     );
   }
+}
 
-  Widget _aboutText() {
-    return const Text(
-      'Nexora — команда разработчиков, которая создаёт '
-      'современные цифровые продукты для бизнеса.\n\n'
-      'Мы разрабатываем сайты, мобильные приложения '
-      'и игры, уделяя внимание дизайну, удобству и качеству.',
-      style: TextStyle(fontSize: 19, height: 1.7, color: Colors.black54),
-    );
-  }
+class _HomeContactSection extends StatelessWidget {
+  const _HomeContactSection({required this.onContact});
 
-  Widget _buildContactSection() {
+  final VoidCallback onContact;
+
+  @override
+  Widget build(BuildContext context) {
+    final compact = MediaQuery.sizeOf(context).width < 600;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 100),
+      decoration: const BoxDecoration(
+        color: Colors.transparent,
+      ),
+      padding: EdgeInsets.symmetric(
+        horizontal: 24,
+        vertical: compact ? 64 : 100,
+      ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Готовы создать\nчто-то новое?',
-            textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 55,
+              fontSize: compact ? 38 : 56,
               fontWeight: FontWeight.w500,
-              height: 1.1,
+              height: 1.12,
+              color: Colors.white,
             ),
           ),
-
-          const SizedBox(height: 35),
-
+          const SizedBox(height: 24),
           const Text(
             'Расскажите нам о вашей идее',
-            style: TextStyle(fontSize: 18, color: Colors.black54),
+            style: TextStyle(fontSize: 19, color: const Color(0xFFE8E8E8)),
           ),
-
-          const SizedBox(height: 35),
-
+          const SizedBox(height: 28),
           ElevatedButton(
-            onPressed: _showContactDialog,
+            onPressed: onContact,
             style: ElevatedButton.styleFrom(
-              backgroundColor: purple,
+              backgroundColor: const Color(0xFF4412A7),
               foregroundColor: Colors.white,
-              minimumSize: const Size(210, 58),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 17),
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(5),
               ),
             ),
-            child: const Text(
-              'Связаться с нами',
-              style: TextStyle(fontSize: 16),
-            ),
+            child: const Text('Связаться с нами'),
           ),
         ],
       ),
     );
   }
 }
+
+

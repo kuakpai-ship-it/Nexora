@@ -1,5 +1,27 @@
 {
   "verdict": "APPROVED",
-  "findings": [],
-  "reviewDoc": "c:\\Users\\PREDATOR\\Downloads\\nexora2-main\\nexora2-main\\.agents\\tasks\\review-doc.md"
+  "findings": [
+    {
+      "label": "Узкая обработка ошибок отправки",
+      "confidence": "likely",
+      "blocking": false,
+      "issue": "_submit ловит только FirebaseException; любой другой throwable оставит _submitting=true (кнопка в вечном loading, форма без отклика, нет SnackBar).",
+      "action": "Добавить catch-all, который сбрасывает _submitting и показывает общий SnackBar."
+    },
+    {
+      "label": "Неверное утверждение в verification.md",
+      "confidence": "confirmed",
+      "blocking": false,
+      "issue": "verification.md заявляет, что ContactsWidget и _HoverContactCard «НЕ изменялись», но git diff показывает правку ContactsWidget (ссылки, подписи, инфо-блок, удалена нижняя кнопка «Закрыть»).",
+      "action": "Поправить формулировку в verification.md; сама правка кода корректна."
+    },
+    {
+      "label": "Новый устаревший API",
+      "confidence": "confirmed",
+      "blocking": false,
+      "issue": "Строка 284 (disabledBackgroundColor: purple.withOpacity(0.6)) добавляет новый deprecated_member_use уровня info.",
+      "action": "Для forward-compat использовать .withValues(...) вместо withOpacity."
+    }
+  ],
+  "reviewDoc": "c:/Users/PREDATOR/Downloads/nexora2-main/nexora2-main/.agents/tasks/review-doc.md"
 }
